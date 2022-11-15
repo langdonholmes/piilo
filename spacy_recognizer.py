@@ -17,6 +17,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
     ENTITIES = [
         "LOCATION",
         "PERSON",
+        "STUDENT",
         "NRP",
         "ORGANIZATION",
         "DATE_TIME",
@@ -26,7 +27,8 @@ class CustomSpacyRecognizer(LocalRecognizer):
 
     CHECK_LABEL_GROUPS = [
         ({"LOCATION"}, {"LOC", "LOCATION", "STREET_ADDRESS", "COORDINATE"}),
-        ({"PERSON"}, {"PER", "PERSON", "STUDENT"}),
+        ({"PERSON"}, {"PER", "PERSON"}),
+        ({"STUDENT"}, {"STUDENT"})
         ({"NRP"}, {"NORP", "NRP"}),
         ({"ORGANIZATION"}, {"ORG"}),
         ({"DATE_TIME"}, {"DATE_TIME"}),
