@@ -26,7 +26,7 @@ def analyzer_engine():
     configuration = {
         "nlp_engine_name": "spacy",
         "models": [
-            {"lang_code": "en", "model_name": "INSERT MODEL NAME"}],
+            {"lang_code": "en", "model_name": "en_pipeline-any-py3-none-any.whl"}],
     }
 
     # Create NLP engine based on configuration
@@ -96,7 +96,7 @@ st.set_page_config(page_title="Student Name Detector (English)", layout="wide")
 
 # Side bar
 st.sidebar.markdown(
-    """Detect and anonymize PII in text using an [NLP model](https://huggingface.co/MY_MODEL_NAME) [trained](https://github.com/aialoe/deidentification-pipeline/tree/8bea38040d36ef62e0638fec8cca3ec652539cbe) on student-generated text collected by Coursera.
+    """Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_pipeline) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected by Coursera.
 """
 )
 

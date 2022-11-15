@@ -4,4 +4,4 @@ presidio-anonymizer
 presidio-analyzer
 torch
 st-annotated-text
-#https://huggingface.co/my_model.whl
+https://huggingface.co/langdonholmes/en_pipeline/resolve/main/en_pipeline-any-py3-none-any.whl
