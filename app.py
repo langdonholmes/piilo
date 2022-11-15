@@ -26,7 +26,7 @@ def analyzer_engine():
     configuration = {
         "nlp_engine_name": "spacy",
         "models": [
-            {"lang_code": "en", "model_name": "en_pipeline"}],
+            {"lang_code": "en", "model_name": "en_student_name_detector"}],
     }
 
     # Create NLP engine based on configuration
@@ -96,7 +96,7 @@ st.set_page_config(page_title="Student Name Detector (English)", layout="wide")
 
 # Side bar
 st.sidebar.markdown(
-    """Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_pipeline) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected by Coursera.
+    """Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_student_name_recognizer) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected by Coursera.
 """
 )
 
@@ -127,7 +127,7 @@ analyzer_load_state.empty()
 
 st_text = st.text_area(
     label="Type in some text",
-    value="Learning Reflection\n\nJohn Williams\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\" \n\nBy John H. Williams",
+    value="Learning Reflection\n\nJohn Williams\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\"\n\nBy John H. Williams",
     height=200,
 )
 

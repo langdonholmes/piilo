@@ -28,14 +28,14 @@ class CustomSpacyRecognizer(LocalRecognizer):
     CHECK_LABEL_GROUPS = [
         ({"LOCATION"}, {"LOC", "LOCATION", "STREET_ADDRESS", "COORDINATE"}),
         ({"PERSON"}, {"PER", "PERSON"}),
-        ({"STUDENT"}, {"STUDENT"})
+        ({"STUDENT"}, {"STUDENT"}),
         ({"NRP"}, {"NORP", "NRP"}),
         ({"ORGANIZATION"}, {"ORG"}),
         ({"DATE_TIME"}, {"DATE_TIME"}),
     ]
 
     MODEL_LANGUAGES = {
-        "en": "langdonholmes/en_pipeline",
+        "en": "langdonholmes/en_student_name_detector",
     }
 
     PRESIDIO_EQUIVALENCES = {
