@@ -26,7 +26,7 @@ def analyzer_engine():
     configuration = {
         "nlp_engine_name": "spacy",
         "models": [
-            {"lang_code": "en", "model_name": "en_pipeline-any-py3-none-any.whl"}],
+            {"lang_code": "en", "model_name": "en_pipeline"}],
     }
 
     # Create NLP engine based on configuration
