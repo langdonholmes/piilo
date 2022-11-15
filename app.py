@@ -127,11 +127,11 @@ analyzer_load_state.empty()
 
 st_text = st.text_area(
     label="Type in some text",
-    value="Learning Reflection\n\nJohn Williams\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\"\n\nBy John H. Williams",
+    value="Learning Reflection\n\nJohn Williams\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\" (Erickson et al. 1998).\n\nBy John H. Williams -- (714) 328-9989 -- johnwilliams@yahoo.com",
     height=200,
 )
 
-button = st.button("Detect Student Names")
+button = st.button("Detect PII")
 
 if 'first_load' not in st.session_state:
     st.session_state['first_load'] = True
