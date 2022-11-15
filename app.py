@@ -96,7 +96,7 @@ st.set_page_config(page_title="Student Name Detector (English)", layout="wide")
 
 # Side bar
 st.sidebar.markdown(
-    """Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_student_name_recognizer) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected by Coursera.
+    """Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_student_name_detector) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected by Coursera.
 """
 )
 

@@ -4,4 +4,4 @@ presidio-anonymizer
 presidio-analyzer
 torch
 st-annotated-text
-https://huggingface.co/langdonholmes/en_pipeline/resolve/main/en_student_name_detector-any-py3-none-any.whl
+https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl
