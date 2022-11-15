@@ -1,0 +1,7 @@
+pandas
+streamlit
+presidio-anonymizer
+presidio-analyzer
+torch
+st-annotated-text
+#https://huggingface.co/my_model.whl
