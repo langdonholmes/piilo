@@ -15,6 +15,7 @@ logger = logging.getLogger("presidio-analyzer")
 class CustomSpacyRecognizer(LocalRecognizer):
 
     ENTITIES = [
+        "STUDENT",
         "LOCATION",
         "PERSON",
         "NRP",
@@ -33,7 +34,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
     ]
 
     MODEL_LANGUAGES = {
-        "en": "beki/en_spacy_pii_distilbert",
+        "en": "langdonholmes/en_pipeline",
     }
 
     PRESIDIO_EQUIVALENCES = {
