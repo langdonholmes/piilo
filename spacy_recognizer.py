@@ -15,7 +15,6 @@ logger = logging.getLogger("presidio-analyzer")
 class CustomSpacyRecognizer(LocalRecognizer):
 
     ENTITIES = [
-        "STUDENT",
         "LOCATION",
         "PERSON",
         "NRP",
@@ -27,7 +26,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
 
     CHECK_LABEL_GROUPS = [
         ({"LOCATION"}, {"LOC", "LOCATION", "STREET_ADDRESS", "COORDINATE"}),
-        ({"PERSON"}, {"PER", "PERSON"}),
+        ({"PERSON"}, {"PER", "PERSON", "STUDENT"}),
         ({"NRP"}, {"NORP", "NRP"}),
         ({"ORGANIZATION"}, {"ORG"}),
         ({"DATE_TIME"}, {"DATE_TIME"}),
