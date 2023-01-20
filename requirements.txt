@@ -4,4 +4,3 @@ presidio_anonymizer==2.2.28
 spacy==3.4.1
 st_annotated_text==3.0.0
 streamlit==1.17.0
-https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl
