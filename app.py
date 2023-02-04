@@ -139,7 +139,7 @@ analyzer_load_state.empty()
 
 st_text = st.text_area(
     label="Type in some text",
-    value="Learning Reflection\n\nJohn Williams and Samantha Morales\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\" (Erickson et al. 1998).\n\nBy John H. Williams -- (714) 328-9989 -- johnwilliams@yahoo.com",
+    value="Learning Reflection\n\nWritten by John Williams and Samantha Morales\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\" (Erickson et al. 1998).\n\nBy John H. Williams -- (714) 328-9989 -- johnwilliams@yahoo.com",
     height=200,
 )
 
