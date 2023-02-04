@@ -6,6 +6,7 @@ from spacy_recognizer import CustomSpacyRecognizer
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
+from presidio_anonymizer.entities import OperatorConfig
 import pandas as pd
 from annotated_text import annotated_text
 from json import JSONEncoder
@@ -63,12 +64,23 @@ def analyze(**kwargs):
         kwargs["entities"] = None
     return analyzer_engine().analyze(**kwargs)
 
+def generate_surrogate(name):
+    """Return appropriate surrogate name from text string"""
+    if "John" in name:
+        return "Jill"
+    else:
+        return "SURROGATE_NAME"
 
 def anonymize(text, analyze_results):
     """Anonymize identified input using Presidio Anonymizer."""
     if not text:
         return
-    res = anonymizer_engine().anonymize(text, analyze_results)
+    res = anonymizer_engine().anonymize(
+        text,
+        analyze_results,
+        operators={"STUDENT": OperatorConfig("custom", {"lambda": generate_surrogate})}
+
+    )
     return res.text
 
 
@@ -127,7 +139,7 @@ analyzer_load_state.empty()
 
 st_text = st.text_area(
     label="Type in some text",
-    value="Learning Reflection\n\nJohn Williams\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\" (Erickson et al. 1998).\n\nBy John H. Williams -- (714) 328-9989 -- johnwilliams@yahoo.com",
+    value="Learning Reflection\n\nJohn Williams and Samantha Morales\n\nIn this course I learned many things. As Liedtke (2004) said, \"Students grow when they learn\" (Erickson et al. 1998).\n\nBy John H. Williams -- (714) 328-9989 -- johnwilliams@yahoo.com",
     height=200,
 )
 
