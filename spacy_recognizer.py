@@ -11,39 +11,20 @@ from presidio_analyzer.predefined_recognizers.spacy_recognizer import SpacyRecog
 
 logger = logging.getLogger("presidio-analyzer")
 
-
 class CustomSpacyRecognizer(LocalRecognizer):
-
+    
     ENTITIES = [
-        "LOCATION",
-        "PERSON",
         "STUDENT",
-        "NRP",
-        "ORGANIZATION",
-        "DATE_TIME",
     ]
 
-    DEFAULT_EXPLANATION = "Identified as {} by Spacy's Named Entity Recognition"
+    DEFAULT_EXPLANATION = "Identified as {} by a Student Name Detection Model"
 
     CHECK_LABEL_GROUPS = [
-        ({"LOCATION"}, {"LOC", "LOCATION", "STREET_ADDRESS", "COORDINATE"}),
-        ({"PERSON"}, {"PER", "PERSON"}),
         ({"STUDENT"}, {"STUDENT"}),
-        ({"NRP"}, {"NORP", "NRP"}),
-        ({"ORGANIZATION"}, {"ORG"}),
-        ({"DATE_TIME"}, {"DATE_TIME"}),
     ]
 
     MODEL_LANGUAGES = {
         "en": "langdonholmes/en_student_name_detector",
-    }
-
-    PRESIDIO_EQUIVALENCES = {
-        "PER": "PERSON",
-        "LOC": "LOCATION",
-        "ORG": "ORGANIZATION",
-        "NROP": "NRP",
-        "DATE_TIME": "DATE_TIME",
     }
 
     def __init__(

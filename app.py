@@ -1,10 +1,8 @@
 
 """Streamlit app for Student Name Detection models."""
 
-from spacy_recognizer import CustomSpacyRecognizer
-from presidio_analyzer.nlp_engine import NlpEngineProvider
+from anonymize import prepare_analyzer, generate_surrogate
 from presidio_anonymizer import AnonymizerEngine
-from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
 from presidio_anonymizer.entities import OperatorConfig
 import pandas as pd
 from annotated_text import annotated_text
@@ -21,27 +19,13 @@ warnings.filterwarnings('ignore')
 def analyzer_engine():
     """Return AnalyzerEngine."""
 
-    spacy_recognizer = CustomSpacyRecognizer()
-
     configuration = {
         "nlp_engine_name": "spacy",
         "models": [
             {"lang_code": "en", "model_name": "en_student_name_detector"}],
     }
 
-    # Create NLP engine based on configuration
-    provider = NlpEngineProvider(nlp_configuration=configuration)
-    nlp_engine = provider.create_engine()
-
-    registry = RecognizerRegistry()
-    # add rule-based recognizers
-    registry.load_predefined_recognizers(nlp_engine=nlp_engine)
-    registry.add_recognizer(spacy_recognizer)
-    # remove the nlp engine we passed, to use custom label mappings
-    registry.remove_recognizer("SpacyRecognizer")
-
-    analyzer = AnalyzerEngine(nlp_engine=nlp_engine,
-                              registry=registry, supported_languages=["en"])
+    analyzer = prepare_analyzer(configuration)
 
     return analyzer
 
@@ -59,13 +43,6 @@ def analyze(**kwargs):
     if "entities" not in kwargs or "All" in kwargs["entities"]:
         kwargs["entities"] = None
     return analyzer_engine().analyze(**kwargs)
-
-def generate_surrogate(name):
-    """Return appropriate surrogate name from text string"""
-    if "John" in name:
-        return "Jill"
-    else:
-        return "SURROGATE_NAME"
 
 def anonymize(text, analyze_results):
     """Anonymize identified input using Presidio Anonymizer."""
