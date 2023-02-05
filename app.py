@@ -1,7 +1,6 @@
 
 """Streamlit app for Student Name Detection models."""
 
-import spacy
 from spacy_recognizer import CustomSpacyRecognizer
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
@@ -46,17 +45,14 @@ def analyzer_engine():
 
     return analyzer
 
-
 @st.cache(allow_output_mutation=True)
 def anonymizer_engine():
     """Return AnonymizerEngine."""
     return AnonymizerEngine()
 
-
 def get_supported_entities():
     """Return supported entities from the Analyzer Engine."""
     return analyzer_engine().get_supported_entities()
-
 
 def analyze(**kwargs):
     """Analyze input using Analyzer engine and input arguments (kwargs)."""
@@ -79,10 +75,8 @@ def anonymize(text, analyze_results):
         text,
         analyze_results,
         operators={"STUDENT": OperatorConfig("custom", {"lambda": generate_surrogate})}
-
     )
     return res.text
-
 
 def annotate(text, st_analyze_results, st_entities):
     tokens = []
@@ -129,7 +123,6 @@ st.sidebar.info(
     "This is part of a deidentification project for student-generated text."
 )
 
-
 # Main panel
 analyzer_load_state = st.info(
     "Starting Presidio analyzer and loading Longformer-based model...")
@@ -162,6 +155,7 @@ with st.spinner("Analyzing..."):
         annotated_tokens = annotate(st_text, st_analyze_results, st_entities)
         # annotated_tokens
         annotated_text(*annotated_tokens)
+
 # vertical space
 st.text("")
 
@@ -171,7 +165,6 @@ with st.spinner("Anonymizing..."):
     if button or st.session_state.first_load:
         st_anonymize_results = anonymize(st_text, st_analyze_results)
         st_anonymize_results
-
 
 # table result
 st.subheader("Detailed Findings")
@@ -197,8 +190,6 @@ else:
 st.session_state['first_load'] = True
 
 # json result
-
-
 class ToDictListEncoder(JSONEncoder):
     """Encode dict to json."""
 
@@ -207,7 +198,6 @@ class ToDictListEncoder(JSONEncoder):
         if o:
             return o.to_dict()
         return []
-
 
 if st_return_decision_process:
     st.json(json.dumps(st_analyze_results, cls=ToDictListEncoder))
