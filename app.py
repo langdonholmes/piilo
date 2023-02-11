@@ -1,9 +1,8 @@
 
 """Streamlit app for Student Name Detection models."""
 
-from anonymize import prepare_analyzer, generate_surrogate
+from spacy_analyzer import prepare_analyzer
 from presidio_anonymizer import AnonymizerEngine
-from presidio_anonymizer.entities import OperatorConfig
 import pandas as pd
 from annotated_text import annotated_text
 from json import JSONEncoder
@@ -17,7 +16,7 @@ warnings.filterwarnings('ignore')
 # Helper methods
 @st.cache(allow_output_mutation=True)
 def analyzer_engine():
-    """Return AnalyzerEngine."""
+    """Return AnalyzerEngine and cache with Streamlit."""
 
     configuration = {
         "nlp_engine_name": "spacy",
@@ -34,28 +33,7 @@ def anonymizer_engine():
     """Return AnonymizerEngine."""
     return AnonymizerEngine()
 
-def get_supported_entities():
-    """Return supported entities from the Analyzer Engine."""
-    return analyzer_engine().get_supported_entities()
-
-def analyze(**kwargs):
-    """Analyze input using Analyzer engine and input arguments (kwargs)."""
-    if "entities" not in kwargs or "All" in kwargs["entities"]:
-        kwargs["entities"] = None
-    return analyzer_engine().analyze(**kwargs)
-
-def anonymize(text, analyze_results):
-    """Anonymize identified input using Presidio Anonymizer."""
-    if not text:
-        return
-    res = anonymizer_engine().anonymize(
-        text,
-        analyze_results,
-        operators={"STUDENT": OperatorConfig("custom", {"lambda": generate_surrogate})}
-    )
-    return res.text
-
-def annotate(text, st_analyze_results, st_entities):
+def annotate(text, st_analyze_results):
     tokens = []
     # sort by start index
     results = sorted(st_analyze_results, key=lambda x: x.start)

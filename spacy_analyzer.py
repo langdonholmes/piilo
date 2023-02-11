@@ -1,18 +1,18 @@
-import logging
-from typing import Optional, List, Tuple, Set
 
 from presidio_analyzer import (
-    RecognizerResult,
+    AnalyzerEngine,
+    RecognizerRegistry,
     LocalRecognizer,
     AnalysisExplanation,
 )
-from presidio_analyzer.nlp_engine import NlpArtifacts
-from presidio_analyzer.predefined_recognizers.spacy_recognizer import SpacyRecognizer
 
+from presidio_analyzer.nlp_engine import NlpEngineProvider, NlpArtifacts
+from typing import Optional
+
+import logging
 logger = logging.getLogger("presidio-analyzer")
 
 class CustomSpacyRecognizer(LocalRecognizer):
-    
     ENTITIES = [
         "STUDENT",
     ]
@@ -30,9 +30,8 @@ class CustomSpacyRecognizer(LocalRecognizer):
     def __init__(
         self,
         supported_language: str = "en",
-        supported_entities: Optional[List[str]] = None,
-        check_label_groups: Optional[Tuple[Set, Set]] = None,
-        context: Optional[List[str]] = None,
+        supported_entities: Optional[list[str]] = None,
+        check_label_groups: Optional[tuple[set, set]] = None,
         ner_strength: float = 0.85,
     ):
         self.ner_strength = ner_strength
@@ -49,7 +48,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
         """Load the model, not used. Model is loaded during initialization."""
         pass
 
-    def get_supported_entities(self) -> List[str]:
+    def get_supported_entities(self) -> list[str]:
         """
         Return supported entities by this model.
         :return: List of the supported entities.
@@ -72,8 +71,16 @@ class CustomSpacyRecognizer(LocalRecognizer):
         )
         return explanation
 
-    def analyze(self, text, entities, nlp_artifacts=None):  # noqa D102
+    def analyze(self,
+                entities: list[str] = None,
+                nlp_artifacts: NlpArtifacts = None):
+        """Analyze input using Analyzer engine and input arguments (kwargs)."""
+        
+        if not entities or "All" in entities:
+            entities = None
+    
         results = []
+        
         if not nlp_artifacts:
             logger.warning("Skipping SpaCy, nlp artifacts not provided...")
             return results
@@ -107,8 +114,31 @@ class CustomSpacyRecognizer(LocalRecognizer):
 
     @staticmethod
     def __check_label(
-        entity: str, label: str, check_label_groups: Tuple[Set, Set]
+        entity: str, label: str, check_label_groups: tuple[set, set]
     ) -> bool:
         return any(
             [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]
         )
+
+def prepare_analyzer(configuration):
+    """Handle Preparation of Analyzer Engine for Presidio."""
+
+    spacy_recognizer = CustomSpacyRecognizer()
+
+    # Create NLP engine based on configuration
+    provider = NlpEngineProvider(nlp_configuration=configuration)
+    nlp_engine = provider.create_engine()
+
+    # add rule-based recognizers
+    registry = RecognizerRegistry()
+    registry.load_predefined_recognizers(nlp_engine=nlp_engine)
+    registry.add_recognizer(spacy_recognizer)
+
+    # remove the nlp engine we passed, to use custom label mappings
+    registry.remove_recognizer("SpacyRecognizer")
+
+    analyzer = AnalyzerEngine(nlp_engine=nlp_engine,
+                              registry=registry,
+                              supported_languages=["en"])
+
+    return analyzer
