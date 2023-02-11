@@ -2,6 +2,7 @@
 """Streamlit app for Student Name Detection models."""
 
 from spacy_analyzer import prepare_analyzer
+from anonymizer import anonymize
 from presidio_anonymizer import AnonymizerEngine
 import pandas as pd
 from annotated_text import annotated_text
@@ -33,7 +34,7 @@ def anonymizer_engine():
     """Return AnonymizerEngine."""
     return AnonymizerEngine()
 
-def annotate(text, st_analyze_results):
+def annotate(text, st_analyze_results, st_entities):
     tokens = []
     # sort by start index
     results = sorted(st_analyze_results, key=lambda x: x.start)
@@ -63,8 +64,8 @@ st.sidebar.markdown(
 
 st_entities = st.sidebar.multiselect(
     label="Which entities to look for?",
-    options=get_supported_entities(),
-    default=list(get_supported_entities()),
+    options=analyzer_engine().get_supported_entities(),
+    default=list(analyzer_engine().get_supported_entities()),
 )
 
 st_threshold = st.sidebar.slider(
@@ -100,7 +101,7 @@ if 'first_load' not in st.session_state:
 st.subheader("Analyzed")
 with st.spinner("Analyzing..."):
     if button or st.session_state.first_load:
-        st_analyze_results = analyze(
+        st_analyze_results = analyzer_engine().analyze(
             text=st_text,
             entities=st_entities,
             language="en",
@@ -118,9 +119,11 @@ st.subheader("Anonymized")
 
 with st.spinner("Anonymizing..."):
     if button or st.session_state.first_load:
-        st_anonymize_results = anonymize(st_text, st_analyze_results)
+        st_anonymize_results = anonymize(anonymizer_engine(),
+                                         st_text,
+                                         st_analyze_results)
         st_anonymize_results
-
+        
 # table result
 st.subheader("Detailed Findings")
 if st_analyze_results:

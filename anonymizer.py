@@ -26,7 +26,12 @@ def anonymize(
     res = anonymizer.anonymize(
         text,
         analyze_results,
-        operators={"STUDENT": OperatorConfig("custom", {"lambda": generate_surrogate})}
+        operators={
+            "STUDENT": OperatorConfig("custom", {"lambda": generate_surrogate}),
+            "EMAIL_ADDRESS": OperatorConfig("replace",  {"new_value": "janedoe@aol.com"}),
+            "PHONE_NUMBER": OperatorConfig("replace",  {"new_value": "888-888-8888"}),
+            "URL": OperatorConfig("replace",  {"new_value": "aol.com"}),
+            }
     )
     
     return res.text

@@ -1,6 +1,7 @@
 
 from presidio_analyzer import (
     AnalyzerEngine,
+    RecognizerResult,
     RecognizerRegistry,
     LocalRecognizer,
     AnalysisExplanation,
@@ -72,6 +73,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
         return explanation
 
     def analyze(self,
+                text: str,
                 entities: list[str] = None,
                 nlp_artifacts: NlpArtifacts = None):
         """Analyze input using Analyzer engine and input arguments (kwargs)."""
