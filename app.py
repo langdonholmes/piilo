@@ -1,9 +1,9 @@
 
 """Streamlit app for Student Name Detection models."""
 
-from anonymize import prepare_analyzer, generate_surrogate
+from spacy_analyzer import prepare_analyzer
+from anonymizer import anonymize
 from presidio_anonymizer import AnonymizerEngine
-from presidio_anonymizer.entities import OperatorConfig
 import pandas as pd
 from annotated_text import annotated_text
 from json import JSONEncoder
@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 # Helper methods
 @st.cache(allow_output_mutation=True)
 def analyzer_engine():
-    """Return AnalyzerEngine."""
+    """Return AnalyzerEngine and cache with Streamlit."""
 
     configuration = {
         "nlp_engine_name": "spacy",
@@ -33,27 +33,6 @@ def analyzer_engine():
 def anonymizer_engine():
     """Return AnonymizerEngine."""
     return AnonymizerEngine()
-
-def get_supported_entities():
-    """Return supported entities from the Analyzer Engine."""
-    return analyzer_engine().get_supported_entities()
-
-def analyze(**kwargs):
-    """Analyze input using Analyzer engine and input arguments (kwargs)."""
-    if "entities" not in kwargs or "All" in kwargs["entities"]:
-        kwargs["entities"] = None
-    return analyzer_engine().analyze(**kwargs)
-
-def anonymize(text, analyze_results):
-    """Anonymize identified input using Presidio Anonymizer."""
-    if not text:
-        return
-    res = anonymizer_engine().anonymize(
-        text,
-        analyze_results,
-        operators={"STUDENT": OperatorConfig("custom", {"lambda": generate_surrogate})}
-    )
-    return res.text
 
 def annotate(text, st_analyze_results, st_entities):
     tokens = []
@@ -85,8 +64,8 @@ st.sidebar.markdown(
 
 st_entities = st.sidebar.multiselect(
     label="Which entities to look for?",
-    options=get_supported_entities(),
-    default=list(get_supported_entities()),
+    options=analyzer_engine().get_supported_entities(),
+    default=list(analyzer_engine().get_supported_entities()),
 )
 
 st_threshold = st.sidebar.slider(
@@ -122,7 +101,7 @@ if 'first_load' not in st.session_state:
 st.subheader("Analyzed")
 with st.spinner("Analyzing..."):
     if button or st.session_state.first_load:
-        st_analyze_results = analyze(
+        st_analyze_results = analyzer_engine().analyze(
             text=st_text,
             entities=st_entities,
             language="en",
@@ -140,9 +119,11 @@ st.subheader("Anonymized")
 
 with st.spinner("Anonymizing..."):
     if button or st.session_state.first_load:
-        st_anonymize_results = anonymize(st_text, st_analyze_results)
+        st_anonymize_results = anonymize(anonymizer_engine(),
+                                         st_text,
+                                         st_analyze_results)
         st_anonymize_results
-
+        
 # table result
 st.subheader("Detailed Findings")
 if st_analyze_results:
