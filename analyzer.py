@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List, Tuple, Set
 
 from presidio_analyzer import (AnalysisExplanation, AnalyzerEngine,
                                LocalRecognizer, RecognizerRegistry,
@@ -26,8 +26,8 @@ class CustomSpacyRecognizer(LocalRecognizer):
     def __init__(
         self,
         supported_language: str = 'en',
-        supported_entities: Optional[list[str]] = None,
-        check_label_groups: Optional[tuple[set, set]] = None,
+        supported_entities: Optional[List[str]] = None,
+        check_label_groups: Optional[Tuple[Set, Set]] = None,
         ner_strength: float = 0.85,
     ):
         self.ner_strength = ner_strength
@@ -44,7 +44,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
         '''Load the model, not used. Model is loaded during initialization.'''
         pass
 
-    def get_supported_entities(self) -> list[str]:
+    def get_supported_entities(self) -> List[str]:
         '''
         Return supported entities by this model.
         :return: List of the supported entities.
@@ -69,7 +69,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
 
     def analyze(self,
                 text: str,
-                entities: list[str] = None,
+                entities: List[str] = None,
                 nlp_artifacts: NlpArtifacts = None):
         '''Analyze input using Analyzer engine and input arguments (kwargs).'''
         
@@ -111,7 +111,7 @@ class CustomSpacyRecognizer(LocalRecognizer):
 
     @staticmethod
     def __check_label(
-        entity: str, label: str, check_label_groups: tuple[set, set]
+        entity: str, label: str, check_label_groups: Tuple[Set, Set]
     ) -> bool:
         return any(
             [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]

@@ -1,3 +1,5 @@
+from typing import List
+
 from presidio_analyzer import RecognizerResult
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
@@ -47,7 +49,7 @@ def generate_surrogate(original_name: str):
 def anonymize(
     anonymizer: AnonymizerEngine,
     text: str,
-    analyze_results: list[RecognizerResult]
+    analyze_results: List[RecognizerResult]
     ):
     '''Anonymize identified input using Presidio Anonymizer.'''
     
