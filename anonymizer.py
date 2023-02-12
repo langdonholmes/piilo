@@ -14,17 +14,17 @@ def split_name(original_name: str):
     If two tokens, first and last name.
     If three tokens, one first name and two last names.
     If four tokens, two first names and two last names.'''
-    match original_name.split():
-        case [first]:
-            return first, None
-        case [first, last]:
-            return first, last
-        case [first, last_1, last_2]:
-            return first, ' '.join((last_1, last_2))
-        case [first_1, first_2, last_1, last_2]:
-            return ' '.join((first_1, first_2)), ' '.join((last_1, last_2))
-        case _:
-            return None, None
+    names = original_name.split()
+    if len(names) == 1
+        return names[0], None
+    elif len(names) == 2
+        return names[0], names[1]
+    elif len(names) == 3:
+        return names[0], ' '.join(names[1:])
+    elif len(names) == 4:
+        return ' '.join(names[:2]), ' '.join(names[2:])
+    else:
+        return None, None
 
 def generate_surrogate(original_name: str):
     '''Generate a surrogate name.
