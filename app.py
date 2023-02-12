@@ -2,7 +2,7 @@
 '''Streamlit app for Student Name Detection models.'''
 
 from analyzer import prepare_analyzer
-from anonymizer import anonymize
+from anonymizer import surrogate_anonymizer
 from presidio_anonymizer import AnonymizerEngine
 import pandas as pd
 from annotated_text import annotated_text
@@ -31,8 +31,8 @@ def analyzer_engine():
 
 @st.cache(allow_output_mutation=True)
 def anonymizer_engine():
-    '''Return AnonymizerEngine.'''
-    return AnonymizerEngine()
+    '''Return generate surrogate anonymizer.'''
+    return surrogate_anonymizer()
 
 def annotate(text, st_analyze_results, st_entities):
     tokens = []
@@ -116,10 +116,9 @@ with st.spinner('Analyzing...'):
 st.text('')
 
 st.subheader('Anonymized')
-
 with st.spinner('Anonymizing...'):
     if button or st.session_state.first_load:
-        st_anonymize_results = anonymize(anonymizer_engine(),
+        st_anonymize_results = anonymizer_engine().anonymize(
                                          st_text,
                                          st_analyze_results)
         st_anonymize_results
