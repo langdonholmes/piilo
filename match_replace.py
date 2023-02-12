@@ -1,69 +1,31 @@
 import pandas as pd
 
-def replace_name_old(country_code, gender, f_l, original_name, fb_df):
-    """
-    Receiving country, gender, first_last name, and the original name.
-    Match with a name that matches gender and country, and is randomly retrieved from the
-    facebook dataset.
-    Compare the surrogate name with the original name to make sure they are different.
-    Return the surrogate name in a form of string.
-    f_l: F or L for first or last name -> str
-    """
-    # prioritizing GENDER over country?
-    # it is a very large dataset so can take long, how to improve the speed?
-    # Q: If want to get a whole name at a time? (just combining)
-    # Q: If only get initials? (change to other letters which should be easy)
-    # translating gender code
-    ###### randomly find a match in the data set! And a return a similar one
-    # if gender == 'male':
-    #     gender = 'M'
-    # elif gender == 'female':
-    #     gender = 'F'
-    # else:
-    #     gender = None
+from names_database import NameDatabase
 
-    surrogate_name = original_name
-    # checking whether the surrogate name and the original name is the same
-    # using the while loop
-    # TODO: [Old version] the order of gender and country need to be changed
-    while(surrogate_name == original_name):
-        # situation when gender can be matched
-        if not gender:
-            gender_df = fb_df[fb_df["gender"] == gender]
-            gender_c_df = gender_df[gender_df["country"] == country_code]
-            # situations: whether country code can be matched
-            if gender_c_df.shape[0] > 0:
-                surrogate_name = gender_c_df[f_l].sample(n=1).to_string()
-            # if gender match, country not match: randomly return from gender df
-            else:
-                surrogate_name = gender_df[f_l].sample(n=1).to_string()
-        else:
-            # situation when gender cannot be match: gender is None
-            country_df = fb_df[fb_df["country"] == country_code]
-            # situation when country can be matched
-            if country_df.shape[0] > 0:
-                surrogate_name = country_df[f_l].sample(n=1).to_string()
-            # situation when neither gender nor country can be matched
-            # randomly return one name from the whole dataset
-            else:
-                surrogate_name = fb_df[f_l].sample(n=1).to_string()
+names_db = NameDatabase
 
-    return surrogate_name
+def describe_name(first_names, last_names):
+    gender = names_db.get_gender() if first_names else None
+    country = names_db.get_country() if last_names else None
+    return gender, country
 
-def match_entity(original_info, entity):
-    # TODO: need refinement for each kind of entity
-    if entity == 'STUDENT':
-    # TODO: here, change between 1 and 2
-        return match_name_2(original_info)
-    elif entity == 'EMAIL_ADDRESS':
-        return 'JaneDoe@mail.com'
-    elif entity == 'PHONE_NUMBER':
-        #TODO: specific form of number will be returned for consistency
-        return '000-000-0000'
-    elif entity == 'URL':
-        return 'google.com'
-    else:
-        pass
+def split_name(all_names):
+    '''Splits name into parts.
+    If one token, assume it is a first name.
+    If two tokens, first and last name.
+    If three tokens, one first name and two last names.
+    If four tokens, two first names and two last names.'''
+    match all_names.split():
+        case [first]:
+            return first, None
+        case [first, last]:
+            return first, last
+        case [first, last_1, last_2]:
+            return first, ' '.join((last_1, last_2))
+        case [first_1, first_2, last_1, last_2]:
+            return ' '.join((first_1, first_2)), ' '.join((last_1, last_2))
+        case _:
+            return None, None
 
 def match_name(original_name):
     # FIXME: take too LONG time to run (large df used multi-times), how to improve
@@ -74,7 +36,6 @@ def match_name(original_name):
     # FIXME: since it is completely random, the same original name may be diff after replacing. How to know whether the two names is the same person?
     first_name = original_name.split()[0]
     global fb_df
-    fb_df = pd.read_parquet('ascii_fb_names_small.parquet')
     names = fb_df[fb_df['first']==first_name]
     if not names.empty:
         name_df = names.sample(n=1)

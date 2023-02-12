@@ -1,3 +1,1 @@
-__pycache__\*
-__pycache__/spacy_analyzer.cpython-310.pyc
-__pycache__/spacy_recognizer.cpython-310.pyc
+__pycache__/*

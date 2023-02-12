@@ -14,6 +14,7 @@ streamlit = "==1.17.0"
 tokenizers = "==0.12.1"
 torch = "==1.12.0"
 en-student-name-detector = {file = "https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl"}
+names-dataset = "*"
 
 [dev-packages]
 
