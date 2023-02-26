@@ -3,17 +3,45 @@ from pathlib import Path
 from typing import List, Optional
 
 import pandas as pd
+from nameparser import HumanName
+from names_dataset import NameDataset, NameWrapper
 from presidio_analyzer import RecognizerResult
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 from presidio_anonymizer.operators import OperatorType
-from nameparser import HumanName
-from names_database import NameDatabase
 
-name_table = Path('data', 'ascii_names.parquet')
+name_table = Path(__file__).parent.parent / 'data' / 'ascii_names.parquet'
 
 logger = logging.getLogger('anonymizer')
 
+class NameDatabase(NameDataset):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def search(self, name: str) -> dict:
+        '''Returns all entries associated with a name string.
+        The name string can be multiple tokens. 
+        Both first and last names will be matched.
+        '''
+        key = name.strip().title()
+        fn = self.first_names.get(key) if self.first_names is not None else None
+        ln = self.last_names.get(key) if self.last_names is not None else None
+        return {'first_name': fn, 'last_name': ln}
+       
+    def get_gender(self, first_names: str) -> str:
+        '''Return the most frequent gender code for a specific last name,
+        or None if a match cannot be found.
+        '''
+        gender = NameWrapper(self.search(first_names)).gender
+        return gender if gender else None
+
+    def get_country(self, last_names: str) -> str:
+        '''Return the most frequent country code for a specific last name,
+        or None if a match cannot be found.
+        '''
+        country = NameWrapper(self.search(last_names)).country
+        return country if country else None
+    
 class surrogate_anonymizer(AnonymizerEngine):
     def __init__(self):
         super().__init__()

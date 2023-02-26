@@ -1,6 +1,5 @@
 
 '''Streamlit app for Student Name Detection models.'''
-
 from piilo.analyzer import prepare_analyzer
 from piilo.anonymizer import surrogate_anonymizer
 import pandas as pd

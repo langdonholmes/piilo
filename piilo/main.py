@@ -2,9 +2,9 @@
 
 from analyzer import prepare_analyzer
 from anonymizer import surrogate_anonymizer
+from models.anonymize import AnonymizeRequest, AnonymizeResponse
 from fastapi import FastAPI
 import logging
-from models.anonymize import AnonymizeRequest, AnonymizeResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Define Student Name Detection Model
