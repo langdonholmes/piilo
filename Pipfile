@@ -18,6 +18,7 @@ names-dataset = "*"
 fastapi = "*"
 httpx = "*"
 uvicorn = "*"
+nameparser = "*"
 
 [dev-packages]
 
