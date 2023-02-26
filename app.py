@@ -1,14 +1,17 @@
 
 '''Streamlit app for Student Name Detection models.'''
-from piilo.analyzer import prepare_analyzer
-from piilo.anonymizer import surrogate_anonymizer
-import pandas as pd
-from annotated_text import annotated_text
-from json import JSONEncoder
 import json
-import warnings
-import streamlit as st
 import os
+import warnings
+from json import JSONEncoder
+
+import pandas as pd
+import streamlit as st
+from annotated_text import annotated_text
+
+from piilo.engines.analyzer import prepare_analyzer
+from piilo.engines.anonymizer import surrogate_anonymizer
+
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 warnings.filterwarnings('ignore')
 
@@ -56,7 +59,7 @@ st.set_page_config(page_title='Student Name Detector (English)', layout='wide')
 
 # Side bar
 st.sidebar.markdown(
-    '''Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_student_name_detector) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected by Coursera.
+    '''Detect and anonymize PII in text using an [NLP model](https://huggingface.co/langdonholmes/en_student_name_detector) [trained](https://github.com/aialoe/deidentification-pipeline) on student-generated text collected from a massive online open-enrollment course.
 '''
 )
 
@@ -74,7 +77,7 @@ st_return_decision_process = st.sidebar.checkbox(
     'Add analysis explanations in json')
 
 st.sidebar.info(
-    'This is part of a deidentification project for student-generated text.'
+    'This is part of a project to develop new anonymization systems that are appropriate for student-generated text.'
 )
 
 # Main panel

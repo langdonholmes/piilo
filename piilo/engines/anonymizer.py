@@ -10,11 +10,14 @@ from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 from presidio_anonymizer.operators import OperatorType
 
-name_table = Path(__file__).parent.parent / 'data' / 'ascii_names.parquet'
+data = Path(__file__).parent.parent.parent / 'data' 
+name_table = data / 'ascii_names.parquet'
 
 logger = logging.getLogger('anonymizer')
-
 class NameDatabase(NameDataset):
+    '''A wrapper around the names_dataset.NameDataset class.
+    '''
+    
     def __init__(self) -> None:
         super().__init__()
     
@@ -29,27 +32,31 @@ class NameDatabase(NameDataset):
         return {'first_name': fn, 'last_name': ln}
        
     def get_gender(self, first_names: str) -> str:
-        '''Return the most frequent gender code for a specific last name,
+        '''Return the most frequent gender code for the provided first name,
         or None if a match cannot be found.
         '''
         gender = NameWrapper(self.search(first_names)).gender
         return gender if gender else None
 
     def get_country(self, last_names: str) -> str:
-        '''Return the most frequent country code for a specific last name,
+        '''Return the most frequent country code for a the provided last name,
         or None if a match cannot be found.
         '''
         country = NameWrapper(self.search(last_names)).country
         return country if country else None
     
 class surrogate_anonymizer(AnonymizerEngine):
+    '''A wrapper around the presidio_anonymizer.AnonymizerEngine class.
+    '''
+    
     def __init__(self):
         super().__init__()
         self.names_db = NameDatabase()
         self.names_df = pd.read_parquet(name_table)
         
         # keep track of names we have seen
-        self.seen_names = dict()
+        self.seen_first_names = dict()
+        self.seen_last_names = dict()
         
     def get_random_name(
             self,
@@ -63,58 +70,74 @@ class surrogate_anonymizer(AnonymizerEngine):
         returns two rows of the names dataframe
         '''
         names_view = self.names_df
+        
         if country:
             names_view = names_view[names_view['country'] == country]
+            
         if gender:
             names_view = names_view[names_view['gender'] == gender]
+            
         if names_view.size < 25:
-            return self.names_df.sample(n=2, weights=self.names_df['count'])
-        return names_view.sample(n=2, weights=names_view['count'])
+            # If we don't have enough names, just return a random sample
+            return self.names_df.sample(n=1, weights=self.names_df['count'])
+        
+        return names_view.sample(n=1, weights=names_view['count'])
 
     def generate_surrogate(self, original_name: str) -> str:
         '''Generate a surrogate name.
         '''
+        
         if original_name == 'PII':
             # Every time we call this function, Presidio will validate it
             # by testing that the function returns a str when the input is
-            # 'PII'. Bypass this test.
+            # 'PII'. We don't need to run below code in this case.
             return 'PII'
-        
-        # If we have seen this name before, return the same surrogate
-        if original_name in self.seen_names:
-            return self.seen_names[original_name]
         
         # Use nameparser to split the name
         name = HumanName(original_name)
+        new_name = HumanName()
+        gender, country = None, None
         
-        gender = self.names_db.get_gender(name.first) if name.first else None
-        logger.info(f'Gender set to {gender}')
-        country = self.names_db.get_country(name.last) if name.last else None
-        logger.info(f'Country set to {country}')
-        
-        surrogate_name = ''
-        
-        name_candidates = self.get_random_name(gender=gender, country=country)
-        
-        surrogate_name += name_candidates.iloc[0]['first']
-        logger.info(f'First name surrogate is {surrogate_name}')
-        
+        # First check if we have seen this name before
         if name.last:
-            logger.info(f'Last name surrogate is {name_candidates.iloc[1]["last"]}')
-            surrogate_name += ' ' + name_candidates.iloc[1]['last']
-            
-        logger.info(f'Returning surrogate name {surrogate_name}')
-        
-        self.seen_names[original_name] = surrogate_name
+            if name.last in self.seen_last_names:
+                new_name.last = self.seen_last_names[name.last]
+            else:
+                # Sample last name, matching country
+                country = self.names_db.get_country(name.last)
+                logger.info(f'Country set to {country}')
+                new_name.last = self.get_random_name(
+                    country=country,
+                    )['last'].iloc[0]
+                logger.info(f'Last name surrogate is {new_name.last}')
                 
-        return surrogate_name
+        if name.first:
+            if name.first in self.seen_first_names:
+                new_name.first = self.seen_first_names[name.first]
+            else:
+                # Sample first name matching gender and country, if available.
+                gender = self.names_db.get_gender(name.first)
+                logger.info(f'Gender set to {gender}')
+                new_name.first = self.get_random_name(
+                    gender=gender,
+                    country=country,
+                    )['first'].iloc[0]
+                logger.info(f'First name surrogate is {new_name.first}')
+            
+        logger.info(f'Returning surrogate name {new_name}')
+        
+        self.seen_first_names[name.first] = new_name.first
+        self.seen_last_names[name.last] = new_name.last
+                
+        return str(new_name)
 
     def anonymize(
         self,
         text: str,
         analyzer_results: List[RecognizerResult]
         ):
-        '''Anonymize identified input using Presidio Anonymizer.'''
+        '''Anonymize identified input using Presidio Anonymizer.
+        '''
         
         if not text:
             return
@@ -149,6 +172,8 @@ if __name__ == '__main__':
     anonymizer = surrogate_anonymizer()
     
     test_names = ['Nora Wang',
+                  'John Williams',
+                  'John H. Williams',
                   'MJ',
                   '',
                   '(',
