@@ -5,9 +5,10 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from engines.analyzer import CustomAnalyzer
-from engines.anonymizer import SurrogateAnonymizer
-from models.anonymize import AnonymizeRequest, AnonymizeResponse
+# assumes piilo is in site-packages
+from piilo.engines.analyzer import CustomAnalyzer
+from piilo.engines.anonymizer import SurrogateAnonymizer
+from piilo.models.anonymize import AnonymizeRequest, AnonymizeResponse
 
 configuration = {
     'nlp_engine_name': 'spacy',
@@ -16,7 +17,6 @@ configuration = {
 }
 
 logger = logging.getLogger('api')
-logging.basicConfig(level=logging.INFO)
 
 logger.info("Loading Custom Presidio Analyzer and Anonymizer...")
 analyzer = CustomAnalyzer(configuration)

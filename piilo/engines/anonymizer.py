@@ -63,13 +63,13 @@ class SurrogateAnonymizer(AnonymizerEngine):
             self,
             country: Optional[str] = None,
             gender: Optional[str] = None
-    ) -> pd.DataFrame:
-        '''Returns two random names from the database as a DataFrame.
-        Both rows match gender and country, if provided.
+    ) -> pd.Series:
+        '''Returns a random name from the database as pd.Series.
+        Matches gender and country, if provided.
         :country: ISO country code e.g. "CO" for Columbia
         :gender: 'M' or 'F'
-        returns two rows of the names dataframe
         '''
+        
         names_view = self.names_df
         
         if country:
@@ -104,7 +104,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
             if name.last in self.seen_last_names:
                 new_name.last = self.seen_last_names[name.last]
             else:
-                # Sample last name, matching country
+                # Sample last name, attempting to match country.
                 country = self.names_db.get_country(name.last)
                 logger.info(f'Country set to {country}')
                 new_name.last = self.get_random_name(
@@ -116,7 +116,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
             if name.first in self.seen_first_names:
                 new_name.first = self.seen_first_names[name.first]
             else:
-                # Sample first name matching gender and country, if available.
+                # Sample first name, attempting to match gender and country.
                 gender = self.names_db.get_gender(name.first)
                 logger.info(f'Gender set to {gender}')
                 new_name.first = self.get_random_name(
