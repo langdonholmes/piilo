@@ -5,8 +5,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from engines.analyzer import prepare_analyzer
-from engines.anonymizer import surrogate_anonymizer
+from engines.analyzer import CustomAnalyzer
+from engines.anonymizer import SurrogateAnonymizer
 from models.anonymize import AnonymizeRequest, AnonymizeResponse
 
 configuration = {
@@ -19,8 +19,8 @@ logger = logging.getLogger('api')
 logging.basicConfig(level=logging.INFO)
 
 logger.info("Loading Custom Presidio Analyzer and Anonymizer...")
-analyzer = prepare_analyzer(configuration)
-anonymizer = surrogate_anonymizer()
+analyzer = CustomAnalyzer(configuration)
+anonymizer = SurrogateAnonymizer()
 logger.info("Loading Successful!")
 
 app = FastAPI()

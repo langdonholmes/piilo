@@ -14,6 +14,7 @@ data = Path(__file__).parent.parent.parent / 'data'
 name_table = data / 'ascii_names.parquet'
 
 logger = logging.getLogger('anonymizer')
+
 class NameDatabase(NameDataset):
     '''A wrapper around the names_dataset.NameDataset class.
     '''
@@ -45,7 +46,7 @@ class NameDatabase(NameDataset):
         country = NameWrapper(self.search(last_names)).country
         return country if country else None
     
-class surrogate_anonymizer(AnonymizerEngine):
+class SurrogateAnonymizer(AnonymizerEngine):
     '''A wrapper around the presidio_anonymizer.AnonymizerEngine class.
     '''
     

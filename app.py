@@ -9,8 +9,8 @@ import pandas as pd
 import streamlit as st
 from annotated_text import annotated_text
 
-from piilo.engines.analyzer import prepare_analyzer
-from piilo.engines.anonymizer import surrogate_anonymizer
+from piilo.engines.analyzer import CustomAnalyzer
+from piilo.engines.anonymizer import SurrogateAnonymizer
 
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 warnings.filterwarnings('ignore')
@@ -26,14 +26,12 @@ def analyzer_engine():
             {'lang_code': 'en', 'model_name': 'en_student_name_detector'}],
     }
 
-    analyzer = prepare_analyzer(configuration)
-
-    return analyzer
+    return CustomAnalyzer(configuration=configuration)
 
 @st.cache(allow_output_mutation=True)
 def anonymizer_engine():
     '''Return generate surrogate anonymizer.'''
-    return surrogate_anonymizer()
+    return SurrogateAnonymizer()
 
 def annotate(text, st_analyze_results, st_entities):
     tokens = []

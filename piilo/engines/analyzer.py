@@ -117,25 +117,27 @@ class CustomSpacyRecognizer(LocalRecognizer):
             [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]
         )
 
-def prepare_analyzer(configuration):
-    '''Handle Preparation of Analyzer Engine for Presidio.'''
+class CustomAnalyzer(AnalyzerEngine):
+    '''Custom Analyzer Engine for Presidio.'''
+    
+    def __init__(self, configuration):
+        
+        spacy_recognizer = CustomSpacyRecognizer()
+        
+        # Create NLP engine based on configuration
+        provider = NlpEngineProvider(nlp_configuration=configuration)
+        nlp_engine = provider.create_engine()
 
-    spacy_recognizer = CustomSpacyRecognizer()
+        # add rule-based recognizers
+        registry = RecognizerRegistry()
+        registry.load_predefined_recognizers(nlp_engine=nlp_engine)
+        registry.add_recognizer(spacy_recognizer)
 
-    # Create NLP engine based on configuration
-    provider = NlpEngineProvider(nlp_configuration=configuration)
-    nlp_engine = provider.create_engine()
+        # remove the nlp engine we passed, to use custom label mappings
+        registry.remove_recognizer('SpacyRecognizer')
 
-    # add rule-based recognizers
-    registry = RecognizerRegistry()
-    registry.load_predefined_recognizers(nlp_engine=nlp_engine)
-    registry.add_recognizer(spacy_recognizer)
-
-    # remove the nlp engine we passed, to use custom label mappings
-    registry.remove_recognizer('SpacyRecognizer')
-
-    analyzer = AnalyzerEngine(nlp_engine=nlp_engine,
-                              registry=registry,
-                              supported_languages=['en'])
-
-    return analyzer
+        super().__init__(
+            nlp_engine=nlp_engine,
+            registry=registry,
+            supported_languages=['en']
+            )
