@@ -3,7 +3,6 @@
 
 from analyzer import prepare_analyzer
 from anonymizer import surrogate_anonymizer
-from presidio_anonymizer import AnonymizerEngine
 import pandas as pd
 from annotated_text import annotated_text
 from json import JSONEncoder

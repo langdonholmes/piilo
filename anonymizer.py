@@ -20,6 +20,9 @@ class surrogate_anonymizer(AnonymizerEngine):
         self.names_db = NameDatabase()
         self.names_df = pd.read_parquet(name_table)
         
+        # keep track of names we have seen
+        self.seen_names = dict()
+        
     def get_random_name(
             self,
             country: Optional[str] = None,
@@ -72,6 +75,10 @@ class surrogate_anonymizer(AnonymizerEngine):
             # 'PII'. Bypass this test.
             return 'PII'
         
+        # If we have seen this name before, return the same surrogate
+        if original_name in self.seen_names:
+            return self.seen_names[original_name]
+        
         first_names, last_names = self.split_name(original_name)
         gender = self.names_db.get_gender(first_names) if first_names else None
         logger.debug(f'Gender set to {gender}')
@@ -90,6 +97,9 @@ class surrogate_anonymizer(AnonymizerEngine):
             surrogate_name += ' ' + name_candidates.iloc[1]['last']
             
         logger.info(f'Returning surrogate name {surrogate_name}')
+        
+        self.seen_names[original_name] = surrogate_name
+                
         return surrogate_name
 
     def anonymize(
@@ -128,7 +138,9 @@ class surrogate_anonymizer(AnonymizerEngine):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    
     anonymizer = surrogate_anonymizer()
+    
     test_names = ['Nora Wang',
                   'MJ',
                   '',
@@ -136,5 +148,6 @@ if __name__ == '__main__':
                   'Mario Escobar Sanchez',
                   'Jane Fonda Michelle Rousseau',
                   'Sir Phillipe Ricardo de la Sota Mayor']
+    
     for name in test_names:
         anonymizer.generate_surrogate(name)
