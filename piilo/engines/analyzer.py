@@ -31,10 +31,16 @@ class CustomSpacyRecognizer(LocalRecognizer):
         ner_strength: float = 0.85,
     ):
         self.ner_strength = ner_strength
+        
         self.check_label_groups = (
-            check_label_groups if check_label_groups else self.CHECK_LABEL_GROUPS
+            check_label_groups if check_label_groups
+            else self.CHECK_LABEL_GROUPS
         )
-        supported_entities = supported_entities if supported_entities else self.ENTITIES
+        supported_entities = (
+            supported_entities if supported_entities
+            else self.ENTITIES
+            )
+        
         super().__init__(
             supported_entities=supported_entities,
             supported_language=supported_language,
@@ -88,7 +94,8 @@ class CustomSpacyRecognizer(LocalRecognizer):
             if entity not in self.supported_entities:
                 continue
             for ent in ner_entities:
-                if not self.__check_label(entity, ent.label_, self.check_label_groups):
+                if not self.__check_label(entity, ent.label_,
+                                          self.check_label_groups):
                     continue
                 textual_explanation = self.DEFAULT_EXPLANATION.format(
                     ent.label_)
@@ -114,7 +121,8 @@ class CustomSpacyRecognizer(LocalRecognizer):
         entity: str, label: str, check_label_groups: Tuple[Set, Set]
     ) -> bool:
         return any(
-            [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]
+            [entity in egrp and label in lgrp 
+             for egrp, lgrp in check_label_groups]
         )
 
 class CustomAnalyzer(AnalyzerEngine):

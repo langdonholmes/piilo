@@ -37,16 +37,23 @@ app.add_middleware(
 def hello():
     return {"message": "Hello World"}
 
-@app.post("/anonymize")
-def anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
+def anonymize(raw_text: str, entities=None, language='en') -> str:
     
-    analyzer_result = analyzer.analyze(anon_req.raw_text,
-                                       entities=anon_req.entities,
-                                       language=anon_req.language,
+    analyzer_result = analyzer.analyze(raw_text,
+                                       entities=entities,
+                                       language=language,
                                        )
     
-    anonymizer_result = anonymizer.anonymize(anon_req.raw_text,
-                                             analyzer_result)
+    return anonymizer.anonymize(raw_text,
+                                analyzer_result)
+
+@app.post("/anonymize")
+def get_anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
+    
+    anonymizer_result = anonymize(anon_req.raw_text,
+                                  entities=anon_req.entities,
+                                  language=anon_req.language,
+                                  )
     
     anonymize_response = AnonymizeResponse(
         anonymized_text=anonymizer_result
