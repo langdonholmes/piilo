@@ -1,11 +1,13 @@
 '''API for PIILO'''
 
-from analyzer import prepare_analyzer
-from anonymizer import surrogate_anonymizer
-from models.anonymize import AnonymizeRequest, AnonymizeResponse
-from fastapi import FastAPI
 import logging
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from piilo.analyzer import prepare_analyzer
+from piilo.anonymizer import surrogate_anonymizer
+from piilo.models.anonymize import AnonymizeRequest, AnonymizeResponse
 
 # Define Student Name Detection Model
 configuration = {
@@ -59,8 +61,9 @@ def anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
     return anonymize_response
 
 if __name__ == "__main__":
-    import uvicorn
     import os
+
+    import uvicorn
     
     uvicorn.run(
         "main:app", host="0.0.0.0",

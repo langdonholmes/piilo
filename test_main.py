@@ -1,7 +1,8 @@
+import logging
+
 from fastapi.testclient import TestClient
 
 from main import app
-import logging
 
 logger = logging.getLogger('api')
 logging.basicConfig(level=logging.INFO)
