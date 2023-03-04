@@ -1,9 +1,6 @@
-'''API for PIILO'''
+'''Main  for PIILO'''
 
 import logging
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 # assumes piilo is in site-packages
 from piilo.engines.analyzer import CustomAnalyzer
@@ -23,19 +20,6 @@ analyzer = CustomAnalyzer(configuration)
 anonymizer = SurrogateAnonymizer()
 logger.info("Loading Successful!")
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Define FastAPI routes
-@app.get("/")
-def hello():
-    return {"message": "Hello World"}
 
 def anonymize(raw_text: str, entities=None, language='en') -> str:
     
@@ -47,7 +31,6 @@ def anonymize(raw_text: str, entities=None, language='en') -> str:
     return anonymizer.anonymize(raw_text,
                                 analyzer_result)
 
-@app.post("/anonymize")
 def get_anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
     
     anonymizer_result = anonymize(anon_req.raw_text,
@@ -62,11 +45,4 @@ def get_anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
     return anonymize_response
 
 if __name__ == "__main__":
-    import os
-    import uvicorn
-    
-    uvicorn.run(
-        "main:app", host="0.0.0.0",
-        port=int(os.environ.get("PORT", 8000)),
-        reload=True,
-    )
+    pass

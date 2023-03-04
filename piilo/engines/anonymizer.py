@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import pandas as pd
 from nameparser import HumanName
-from names_dataset import NameDataset, NameWrapper
+from names_dataset import NameDataset
 from presidio_analyzer import RecognizerResult
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
@@ -21,30 +21,27 @@ class NameDatabase(NameDataset):
     
     def __init__(self) -> None:
         super().__init__()
-    
-    def search(self, name: str) -> dict:
-        '''Returns all entries associated with a name string.
-        The name string can be multiple tokens. 
-        Both first and last names will be matched.
-        '''
-        key = name.strip().title()
-        fn = self.first_names.get(key) if self.first_names is not None else None
-        ln = self.last_names.get(key) if self.last_names is not None else None
-        return {'first_name': fn, 'last_name': ln}
-       
-    def get_gender(self, first_names: str) -> str:
-        '''Return the most frequent gender code for the provided first name,
-        or None if a match cannot be found.
-        '''
-        gender = NameWrapper(self.search(first_names)).gender
-        return gender if gender else None
 
-    def get_country(self, last_names: str) -> str:
-        '''Return the most frequent country code for a the provided last name,
-        or None if a match cannot be found.
+    def _max(self, name_stats: dict) -> str:
+        try:
+            g_ = {a: b for a, b in name_stats.items() if b is not None}
+            return max(g_, key=g_.get)
+        except ValueError:
+            return None
+       
+    def get_gender(self, name: HumanName) -> str:
+        '''Return the most frequent gender code for the provided name's 
+        first name, or None if a match cannot be found.
         '''
-        country = NameWrapper(self.search(last_names)).country
-        return country if country else None
+        result = self.first_names.get(name.first)
+        return self._max(result.get('gender', None)) if result else None
+
+    def get_country(self, name: HumanName) -> str:
+        '''Return the most frequent country code for the provided name's 
+        last name, or None if a match cannot be found.
+        '''
+        result = self.last_names.get(name.last)
+        return self._max(result.get('country', None)) if result else None
     
 class SurrogateAnonymizer(AnonymizerEngine):
     '''A wrapper around the presidio_anonymizer.AnonymizerEngine class.
@@ -66,7 +63,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
     ) -> pd.Series:
         '''Returns a random name from the database as pd.Series.
         Matches gender and country, if provided.
-        :country: ISO country code e.g. "CO" for Columbia
+        :country: ISO country code e.g. 'CO' for Columbia
         :gender: 'M' or 'F'
         '''
         
@@ -95,17 +92,18 @@ class SurrogateAnonymizer(AnonymizerEngine):
             return 'PII'
         
         # Use nameparser to split the name
-        name = HumanName(original_name)
+        name = HumanName(original_name.strip().title())
         new_name = HumanName()
         gender, country = None, None
         
         # First check if we have seen this name before
         if name.last:
             if name.last in self.seen_last_names:
+                logger.info(f'Last name has already been seen.')
                 new_name.last = self.seen_last_names[name.last]
             else:
                 # Sample last name, attempting to match country.
-                country = self.names_db.get_country(name.last)
+                country = self.names_db.get_country(name)
                 logger.info(f'Country set to {country}')
                 new_name.last = self.get_random_name(
                     country=country,
@@ -114,10 +112,11 @@ class SurrogateAnonymizer(AnonymizerEngine):
                 
         if name.first:
             if name.first in self.seen_first_names:
+                logger.info(f'First name has already been seen.')
                 new_name.first = self.seen_first_names[name.first]
             else:
                 # Sample first name, attempting to match gender and country.
-                gender = self.names_db.get_gender(name.first)
+                gender = self.names_db.get_gender(name)
                 logger.info(f'Gender set to {gender}')
                 new_name.first = self.get_random_name(
                     gender=gender,
@@ -170,7 +169,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     
-    anonymizer = surrogate_anonymizer()
+    anonymizer = SurrogateAnonymizer()
     
     test_names = ['Nora Wang',
                   'John Williams',
@@ -180,7 +179,13 @@ if __name__ == '__main__':
                   '(',
                   'Mario Escobar Sanchez',
                   'Jane Fonda Michelle Rousseau',
-                  'Sir Phillipe Ricardo de la Sota Mayor']
+                  'Sir Phillipe Ricardo de la Sota Mayor',
+                  'Anthony REDDIX',
+                  'REDDIX, Anthony',
+                  ]
     
-    for name in test_names:
-        anonymizer.generate_surrogate(name)
+    for test_name in test_names:
+        name = HumanName(test_name.strip().title())
+        logger.info(f'{test_name} -> {name.first} + {name.last}')
+    
+        anonymizer.generate_surrogate(test_name)
