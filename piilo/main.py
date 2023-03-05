@@ -13,21 +13,21 @@ configuration = {
         {'lang_code': 'en', 'model_name': 'en_student_name_detector'}],
 }
 
-logger = logging.getLogger('api')
+logger = logging.getLogger('piilo')
 
 logger.info("Loading Custom Presidio Analyzer and Anonymizer...")
 analyzer = CustomAnalyzer(configuration)
 anonymizer = SurrogateAnonymizer()
 logger.info("Loading Successful!")
 
-
-def anonymize(raw_text: str, entities=None, language='en') -> str:
-    
+def analyze(raw_text: str, entities=None, language='en'):
     analyzer_result = analyzer.analyze(raw_text,
                                        entities=entities,
                                        language=language,
                                        )
-    
+    return analyzer_result
+
+def anonymize(analyzer_result) -> str:
     return anonymizer.anonymize(raw_text,
                                 analyzer_result)
 
