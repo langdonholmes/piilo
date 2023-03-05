@@ -27,7 +27,10 @@ def analyze(raw_text: str, entities=None, language='en'):
                                        )
     return analyzer_result
 
-def anonymize(analyzer_result) -> str:
+def anonymize(raw_text: str, entities=None, language='en') -> str:
+    
+    analyzer_result = analyze(raw_text, entities, language)
+    
     return anonymizer.anonymize(raw_text,
                                 analyzer_result)
 
