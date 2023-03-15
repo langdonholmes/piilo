@@ -11,12 +11,16 @@ def test_anonymizer(texts):
     return [piilo.anonymize(text) for text in texts]
     
 if __name__ == "__main__":
-    from pathlib import Path
-    import sys
-    # Add piilo to sys.path so that we can import from piilo
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    
-    import piilo
+    try:
+        import piilo
+    except ImportError:
+        logger.info('Piilo not found in site-packages.')
+        logger.info('Temporarily adding parent directory to path...')
+        from pathlib import Path
+        import sys
+        # Add piilo to sys.path so that we can import from piilo
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        import piilo
 
     texts = [
         'test string without identifiers',
