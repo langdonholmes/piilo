@@ -1,30 +1,14 @@
 import logging
 
-from fastapi.testclient import TestClient
-
-logger = logging.getLogger('api')
+logger = logging.getLogger('piilo')
 logging.basicConfig(level=logging.INFO)
 
-def test_read_main():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Hello World"}
-    
-def test_email():
-    response = client.post("/anonymize",
-                           json={"raw_text": "My name is joe@aol.com"},
-                           )
-    assert response.status_code == 200
-    assert response.json() == {
-        "anonymized_text": "My name is janedoe@aol.com"
-    }
+def test_analyzer(texts):
+    return [piilo.analyze(text) for text in texts]
 
-def test_name():
-    response = client.post("/anonymize",
-                           json={"raw_text": "My name is Nora Wang"},
-                           )
-    assert response.status_code == 200
-    logger.info(response.json())
+    
+def test_anonymizer(texts):
+    return [piilo.anonymize(text) for text in texts]
     
 if __name__ == "__main__":
     from pathlib import Path
@@ -32,9 +16,15 @@ if __name__ == "__main__":
     # Add piilo to sys.path so that we can import from piilo
     sys.path.insert(0, str(Path(__file__).parent.parent))
     
-    from main import app
-    client = TestClient(app)
+    import piilo
+
+    texts = [
+        'test string without identifiers',
+        'My name is Antonio. Email: Antonio99@yahoo.com'
+        ]
+
+    # To analyze the texts. Returns list of RecognizerResult, defined by presidio_analyzer
+    print(test_analyzer(texts))
     
-    test_read_main()
-    test_email()
-    test_name()
+    # To analyze AND anonymize with hiding-in-plain-sight obfuscation. Returns list of texts with identifiers obfuscated.
+    print(test_anonymizer(texts))
