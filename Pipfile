@@ -11,9 +11,9 @@ spacy = "==3.4.1"
 spacy-transformers = "==1.1.7"
 tokenizers = "==0.12.1"
 torch = "==1.12.0"
-en-student-name-detector = {file = "https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl"}
 names-dataset = "*"
 nameparser = "*"
+en-student-name-detector = {file = "https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl"}
 
 [dev-packages]
 st-annotated-text = "==3.0.0"

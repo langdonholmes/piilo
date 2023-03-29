@@ -22,7 +22,7 @@ Currently, the best way to install PIILO is using pipenv:
     - Use pipenv to install from the Pipfile
         - `pipenv install`
 
-3. Verify that the finetuned transformer model was installed
+3. Install the finetuned transformer
 
 ```
 pipenv install https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl
