@@ -1,71 +1,72 @@
 import logging
-from typing import Optional, List, Tuple, Set
+from typing import List, Optional, Set, Tuple
 
-from presidio_analyzer import (AnalysisExplanation, AnalyzerEngine,
-                               LocalRecognizer, RecognizerRegistry,
-                               RecognizerResult)
+from presidio_analyzer import (
+    AnalysisExplanation,
+    AnalyzerEngine,
+    LocalRecognizer,
+    RecognizerRegistry,
+    RecognizerResult,
+)
 from presidio_analyzer.nlp_engine import NlpArtifacts, NlpEngineProvider
 
-logger = logging.getLogger('presidio-analyzer')
+logger = logging.getLogger("presidio-analyzer")
+
 
 class CustomSpacyRecognizer(LocalRecognizer):
     ENTITIES = [
-        'STUDENT',
+        "STUDENT",
     ]
 
-    DEFAULT_EXPLANATION = 'Identified as {} by a Student Name Detection Model'
+    DEFAULT_EXPLANATION = "Identified as {} by a Student Name Detection Model"
 
     CHECK_LABEL_GROUPS = [
-        ({'STUDENT'}, {'STUDENT'}),
+        ({"STUDENT"}, {"PERSON"}),
     ]
 
     MODEL_LANGUAGES = {
-        'en': 'langdonholmes/en_student_name_detector',
+        "en": "en_core_web_sm",
     }
 
     def __init__(
         self,
-        supported_language: str = 'en',
+        supported_language: str = "en",
         supported_entities: Optional[List[str]] = None,
         check_label_groups: Optional[Tuple[Set, Set]] = None,
         ner_strength: float = 0.85,
     ):
         self.ner_strength = ner_strength
-        
+
         self.check_label_groups = (
-            check_label_groups if check_label_groups
-            else self.CHECK_LABEL_GROUPS
+            check_label_groups if check_label_groups else self.CHECK_LABEL_GROUPS
         )
-        supported_entities = (
-            supported_entities if supported_entities
-            else self.ENTITIES
-            )
-        
+        supported_entities = supported_entities if supported_entities else self.ENTITIES
+
         super().__init__(
             supported_entities=supported_entities,
             supported_language=supported_language,
         )
 
     def load(self) -> None:
-        '''Load the model, not used. Model is loaded during initialization.'''
+        """Load the model, not used. Model is loaded during initialization."""
         pass
 
     def get_supported_entities(self) -> List[str]:
-        '''
+        """
         Return supported entities by this model.
         :return: List of the supported entities.
-        '''
+        """
         return self.supported_entities
 
     def build_spacy_explanation(
         self, original_score: float, explanation: str
     ) -> AnalysisExplanation:
-        '''
+        """
         Create explanation for why this result was detected.
         :param original_score: Score given by this recognizer
         :param explanation: Explanation string
         :return:
-        '''
+        """
         explanation = AnalysisExplanation(
             recognizer=self.__class__.__name__,
             original_score=original_score,
@@ -73,19 +74,18 @@ class CustomSpacyRecognizer(LocalRecognizer):
         )
         return explanation
 
-    def analyze(self,
-                text: str,
-                entities: List[str] = None,
-                nlp_artifacts: NlpArtifacts = None):
-        '''Analyze input using Analyzer engine and input arguments (kwargs).'''
-        
-        if not entities or 'All' in entities:
+    def analyze(
+        self, text: str, entities: List[str] = None, nlp_artifacts: NlpArtifacts = None
+    ):
+        """Analyze input using Analyzer engine and input arguments (kwargs)."""
+
+        if not entities or "All" in entities:
             entities = None
-    
+
         results = []
-        
+
         if not nlp_artifacts:
-            logger.warning('Skipping SpaCy, nlp artifacts not provided...')
+            logger.warning("Skipping SpaCy, nlp artifacts not provided...")
             return results
 
         ner_entities = nlp_artifacts.entities
@@ -94,11 +94,9 @@ class CustomSpacyRecognizer(LocalRecognizer):
             if entity not in self.supported_entities:
                 continue
             for ent in ner_entities:
-                if not self.__check_label(entity, ent.label_,
-                                          self.check_label_groups):
+                if not self.__check_label(entity, ent.label_, self.check_label_groups):
                     continue
-                textual_explanation = self.DEFAULT_EXPLANATION.format(
-                    ent.label_)
+                textual_explanation = self.DEFAULT_EXPLANATION.format(ent.label_)
                 explanation = self.build_spacy_explanation(
                     self.ner_strength, textual_explanation
                 )
@@ -121,17 +119,17 @@ class CustomSpacyRecognizer(LocalRecognizer):
         entity: str, label: str, check_label_groups: Tuple[Set, Set]
     ) -> bool:
         return any(
-            [entity in egrp and label in lgrp 
-             for egrp, lgrp in check_label_groups]
+            [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]
         )
 
+
 class CustomAnalyzer(AnalyzerEngine):
-    '''Custom Analyzer Engine for Presidio.'''
-    
+    """Custom Analyzer Engine for Presidio."""
+
     def __init__(self, configuration):
-        
+
         spacy_recognizer = CustomSpacyRecognizer()
-        
+
         # Create NLP engine based on configuration
         provider = NlpEngineProvider(nlp_configuration=configuration)
         nlp_engine = provider.create_engine()
@@ -142,10 +140,8 @@ class CustomAnalyzer(AnalyzerEngine):
         registry.add_recognizer(spacy_recognizer)
 
         # remove the nlp engine we passed, to use custom label mappings
-        registry.remove_recognizer('SpacyRecognizer')
+        registry.remove_recognizer("SpacyRecognizer")
 
         super().__init__(
-            nlp_engine=nlp_engine,
-            registry=registry,
-            supported_languages=['en']
-            )
+            nlp_engine=nlp_engine, registry=registry, supported_languages=["en"]
+        )

@@ -10,29 +10,12 @@ pinned: false
 license: apache-2.0
 ---
 
-Currently, the best way to install PIILO is using pipenv:
-
+PIILO uses poetry to manage dependencies. To install PIILO, follow these steps:
 1. Clone the repository
-    - `git clone https://huggingface.co/spaces/langdonholmes/piilo`
+2. Run `poetry install` in the root directory
+3. Run `poetry run streamlit run app.py` to start the app
 
-2. Install dependencies from Pipfile
-    - Install pipenv, if you do not have it.
-        - `pip install --user pipenv`
-
-    - Use pipenv to install from the Pipfile
-        - `pipenv install`
-
-3. Install the finetuned transformer
-
-```
-pipenv install https://huggingface.co/langdonholmes/en_student_name_detector/resolve/main/en_student_name_detector-any-py3-none-any.whl
-```
-
-4. Add PIILO to path
-    - Navigate to PIILO repository on your filesystem: `cd piilo`
-    - `pipenv install -e .`
-    
-5. Use piilo in your project
+Once we have a package, users will be able to...
 ```
 import piilo
 
