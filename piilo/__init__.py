@@ -1,1 +1,1 @@
-from .main import anonymize, analyze
+from .main import analyze, anonymize

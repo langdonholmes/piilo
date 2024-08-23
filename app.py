@@ -124,7 +124,7 @@ with st.spinner("Anonymizing..."):
         st_anonymize_results = anonymizer_engine().anonymize(
             st_text, st_analyze_results
         )
-        st_anonymize_results
+        st_anonymize_results.text
 
 # table result
 st.subheader("Detailed Findings")

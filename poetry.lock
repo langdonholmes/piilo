@@ -367,6 +367,20 @@ type = "url"
 url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1.tar.gz"
 
 [[package]]
+name = "faker"
+version = "27.4.0"
+description = "Faker is a Python package that generates fake data for you."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "Faker-27.4.0-py3-none-any.whl", hash = "sha256:1c44d4bdcad7237516c9a829b6a0bcb031c6a4cb0506207c480c79f74d8922bf"},
+    {file = "faker-27.4.0.tar.gz", hash = "sha256:4ce108fc96053bbba3abf848e3a2885f05faa938deb987f97e4420deaec541c4"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.4"
+
+[[package]]
 name = "filelock"
 version = "3.15.4"
 description = "A platform independent file lock."
@@ -2324,4 +2338,4 @@ wasabi = ">=0.9.1,<1.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "d3f9343de9cf74c0ae1186e29b115c2554f265fdb5c2f43bb979c6974bda34c3"
+content-hash = "7ac76a0beda3d70df4d4a3aed5ddd133f24238e05eade9425f4093d08fcee322"
