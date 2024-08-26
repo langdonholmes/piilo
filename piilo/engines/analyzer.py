@@ -246,31 +246,31 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
             # ID rule
             if len(text) > 8 and (text.isdigit() or (not text[:2].isdigit() and text[-4:].isdigit())): 
-                res = self.create_result("B-ID_NUM", token)
+                res = self.create_result("ID_NUM", token)
 
             # Email rule 
             # (removed len(text) > 2 because it's reduant with the extension check)
             elif "@" in text and any(ext in text for ext in self.email_extensions_bl):
-                res = self.create_result("B-EMAIL", token)
+                res = self.create_result("EMAIL_ADDRESS", token)
 
             # URL rule
             # (added or "www" in text because the original ignored anything without http)
             elif ("http" in text or "www" in text) and all(ext not in text for ext in self.url_extensions_bl):
                 exclude = any(word in text.lower() for word in self.url_extensions_wl)
                 if not exclude:
-                    res = self.create_result("B-URL_PERSONAL", token)
+                    res = self.create_result("URL", token)
 
             # Address rule
             # This currently also catches phone numbers..
             elif self.zip_codes_bl.eq(text).any():
-                res = self.create_result("I-STREET_ADDRESS", token)
+                res = self.create_result("STREET_ADDRESS", token)
             
             # Phone number rules
             for delimiter in self.phone_delimiters:
                 phone_number_parts = text.split(delimiter)
                 if (len(phone_number_parts) == 2 and
                     all(part.isdigit() and len(part) > 2 for part in phone_number_parts)):
-                    res = self.create_result("I-PHONE_NUM", token)
+                    res = self.create_result("PHONE_NUMBER", token)
                     break
             
             # Phone number rules (exception; doesn't follow the delimiter rule)
@@ -279,7 +279,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
                 len(phone_number_parts[0]) == 3 and 
                 len(phone_number_parts[1]) == 3 and 
                 len(phone_number_parts[2]) == 4):
-                res = self.create_result("B-PHONE_NUM", token)
+                res = self.create_result("PHONE_NUMBER", token)
 
             # Name rules
             # if self.names_bl.eq(text).any():
@@ -326,10 +326,12 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
         # Generate features here
         # features = self.generate_features(nlp_artifacts.tokens)
+
+        # Currently only supports token-level processing
+        # Part of token-level processing requires some feature generation.
         results, features = self.token_pass(nlp_artifacts.tokens)
 
         # Next steps should involve feature generation and processing
-        # features = self.generate_features(nlp_artifacts.tokens)
         # results = self.feature_pass(results, features)
 
         return results

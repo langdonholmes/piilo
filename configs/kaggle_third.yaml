@@ -1,6 +1,6 @@
 supports:
   languages: en
-  entities: [STUDENT, B-NAME_STUDENT, B-EMAIL, B-ID_NUM, B-PHONE_NUM, I-EMAIL, I-STREET_ADDRESS, I-PHONE_NUM, I-NAME_STUDENT]
+  entities: [STUDENT, EMAIL_ADDRESS, ID_NUM, URL, PHONE_NUMBER]
 
 parquets:
   zip_codes:
