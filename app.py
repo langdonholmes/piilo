@@ -19,7 +19,7 @@ st.set_page_config(page_title="Student Name Detector (English)", layout="wide")
 
 
 # Helper methods
-@st.cache(allow_output_mutation=True)
+@st.cache_resource()
 def analyzer_engine():
     """Return AnalyzerEngine and cache with Streamlit."""
 
@@ -31,7 +31,7 @@ def analyzer_engine():
     return CustomAnalyzer(configuration=configuration)
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource()
 def anonymizer_engine():
     """Return generate surrogate anonymizer."""
     return SurrogateAnonymizer()

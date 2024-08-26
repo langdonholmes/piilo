@@ -1,0 +1,21 @@
+supports:
+  languages: en
+  entities: [STUDENT, B-NAME_STUDENT, B-EMAIL, B-ID_NUM, B-PHONE_NUM, I-EMAIL, I-STREET_ADDRESS, I-PHONE_NUM, I-NAME_STUDENT]
+
+parquets:
+  zip_codes:
+    path: third_place_zipcodes.parquet
+    column: GEOID
+  names:
+    path: third_place_first_and_last_names.parquet
+    column: names
+
+black_lists:
+  email_extensions: [com, org, gov, net, edu, co, us]
+  url_extensions: [wiki, google, coursera]
+
+white_lists:
+  url_extensions: [design, life, mind, maps, .gov, medium, amazon, strat, think, learn, model]
+
+delimiters:
+  phone_delimiters: [")", "x"]
