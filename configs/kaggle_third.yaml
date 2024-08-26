@@ -1,6 +1,6 @@
 supports:
   languages: en
-  entities: [STUDENT, EMAIL_ADDRESS, ID_NUM, URL, PHONE_NUMBER, ZIP_CODE]
+  entities: [NAME_STUDENT, EMAIL_ADDRESS, ID_NUM, URL, PHONE_NUMBER, ZIP_CODE]
 
 parquets:
   zip_codes:
@@ -40,6 +40,7 @@ thresholds:
   first_name_low: 2920
   last_name_high: 49000
   last_name_low: 2650
+  feature: 0.0275
 
 delimiters:
   phone_delimiters: [")", "x"]

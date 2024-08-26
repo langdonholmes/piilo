@@ -183,12 +183,24 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # =======================================
         # For feature generation
         # =======================================
-        self.first_name_high = self.first_names_bl[self.first_names_bl['count'] >= self.cnfg["thresholds"]['first_name_high']]
-        self.first_name_low = self.first_names_bl[self.first_names_bl['count'] >= self.cnfg["thresholds"]['first_name_low']]
-        self.last_name_high = self.last_names_bl[self.last_names_bl['count'] >= self.cnfg["thresholds"]['last_name_high']]
-        self.last_name_low = self.last_names_bl[self.last_names_bl['count'] >= self.cnfg["thresholds"]['last_name_low']]
 
-        # Because set membership checks are much faster than pd.Series.unique() membership checks
+        # Separate dataframes for high and low frequency names
+        # Thresholds are customizable (set in the configuration file under "thresholds")
+        self.first_name_high = self.first_names_bl[
+            self.first_names_bl['count'] >= self.cnfg["thresholds"]['first_name_high']
+        ]
+        self.first_name_low = self.first_names_bl[
+            self.first_names_bl['count'] >= self.cnfg["thresholds"]['first_name_low']
+        ]
+        self.last_name_high = self.last_names_bl[
+            self.last_names_bl['count'] >= self.cnfg["thresholds"]['last_name_high']
+        ]
+        self.last_name_low = self.last_names_bl[
+            self.last_names_bl['count'] >= self.cnfg["thresholds"]['last_name_low']
+        ]
+
+        # Dictionaries for membership checks and value lookups
+        # All dictionaries required to run the vectorizer and the xgboost models submitted by third place winner
         self.first_name_full_dict = self.first_names_bl.set_index('first_name')['count'].to_dict()
         self.first_name_high_dict = self.first_name_high.set_index('first_name')['count'].to_dict()
         self.first_name_low_dict = self.first_name_low.set_index('first_name')['count'].to_dict()
@@ -197,11 +209,16 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         self.last_name_low_dict = self.last_name_low.set_index('last_name')['count'].to_dict()
 
         self.words_10k = self.setup_parquets("words_10k")
-        self.words_10k_dict = dict(zip(self.words_10k.iloc[:,0].to_list(), range(self.words_10k.shape[0], 0, -1)))
         self.words_1k = self.setup_parquets("words_1k")
-        self.words_1k_dict = dict(zip(self.words_1k.iloc[:,0].to_list(), range(self.words_1k.shape[0], 0, -1)))
         self.words_popular = set(self.setup_parquets("words_popular").iloc[:, 0])
 
+        # Creates key value pairs where the key is the word and the value is len(df) - index
+        # Not sure what this accomplishes but it's set up this way in the orignial code
+        self.words_10k_dict = dict(zip(self.words_10k.iloc[:,0].to_list(), range(self.words_10k.shape[0], 0, -1)))
+        self.words_1k_dict = dict(zip(self.words_1k.iloc[:,0].to_list(), range(self.words_1k.shape[0], 0, -1)))
+        
+        # Name lists where any overlapping values with 10k popular words have been removed
+        # e.g., russia, laugh, attack, rome, etc. for first names
         self.first_name_diff = set(self.setup_parquets("first_name_diff").iloc[:, 0])
         self.last_name_diff = set(self.setup_parquets("last_name_diff").iloc[:, 0])
 
@@ -234,6 +251,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
     ) -> RecognizerResult:
         """
         Create recognizer result object. Assumes token is a spacy token.
+        Score and explanation are placeholders for now.
         """
         thirdplace_results = RecognizerResult(
             entity_type=entity,
@@ -264,12 +282,12 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         )
         return explanation
 
-    def identity(x):
-        return x
-
     def generate_padded_name_tokens(
         self, tokens: spacy.tokens.token.Token, pad_size:int =2
     ):
+        """
+        Iterates over tokens to find names and returns each hit with a window of pad_size*2 + 1.
+        """
         pad = ["gfsda"] * pad_size
         padded_text = pad + [w.text for w in tokens] + pad
 
@@ -280,7 +298,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
             target_string = token.text
             if self.names_bl.eq(target_string).any():
                 name_indices.append(ix)
-                padded_data.append(padded_text[ix:ix+5])
+                padded_data.append(padded_text[ix:ix+pad_size*2+1])
 
         return name_indices, padded_data
 
@@ -374,10 +392,22 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return results, features, features_pos
 
     def generate_features(
-        self, target_strings, window_size=12
+        self, target_strings: List[str]
     ):
         """
         Any additional features that are needed for the feature-based approach should be generated here.
+        Mostly uses string manipulation and dictionary lookups.
+        Here are the list of checks:
+        - Checks if the first character is uppercase
+        - Checks the length of the string
+        - Checks if the string is a newline character
+        - Checks if the string is a common punctuation
+        - Checks if the string is padding
+        - Checks if the string is a digit
+        - Checks if the string is in the 10k/1k most common words or popular words
+        - Checks if the string is in the high/low frequency first/last name lists
+        - Get value counts for the corresponding 10k/1k most common words 
+          and high/low frequency first/last names
         """
 
         string_feature_list_full = []
@@ -448,10 +478,6 @@ class KaggleThirdAnalyzer(LocalRecognizer):
                 models_fp_remove.append(m)
 
         return models_splitter, models_fp_remove
-    
-    # Used when training the model
-    def identity(self, x):
-        return x
 
     def load_vectorizers(self):
         # TODO: Change this into being controlled by self.cnfg
@@ -464,6 +490,9 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return vectorizer_raw, vectorizer_pt
 
     def make_predictions(self, models, feat):
+        """
+        Make predictions using the models and features. Return average predictions.
+        """
         preds = [m.predict_proba(feat) for m in models]
         return sum(preds) / len(models)
 
@@ -518,28 +547,38 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         models_splitter, models_fp_remove = self.load_models()
         vectorizer_raw, vectorizer_pt = self.load_vectorizers()
 
-        # Generate padded name tokens
+        # Some feature generation needs to be done first using because 
+        # part of token-level processing requires some byproducts of feature generation.
+
+        # ==================================================================
+        # First pass: find names and return them with a window of pad_size*2 + 1
+        # Pad size is set to 2 by default
         named_indices, padded_data = self.generate_padded_name_tokens(nlp_artifacts.tokens)
 
+        # Generate features for the name tokens
+        # Mostly uses string manipulation and dictionary lookups
         name_features = np.array([self.generate_features(x) for x in padded_data])
         
         padded_data_predictions = self.make_predictions(models_splitter, name_features)
         name_indices = self.use_split_data(padded_data_predictions, named_indices)
 
-        # Part of token-level processing requires some feature generation.
+        # ==================================================================
+        # Second pass: token-level processing.
         results, features, pos_features = self.token_pass(nlp_artifacts.tokens, name_indices)
 
         feature_array = np.array([self.generate_features(x) for x in features])
         tfidf_raw = np.array(vectorizer_raw.transform(features).todense())
         tfidf_pt = np.array(vectorizer_pt.transform(pos_features).todense())
 
+        # ==================================================================
+        # Final step: feature-level processing
+
         concatenated_features = np.concatenate([feature_array, tfidf_raw, tfidf_pt], axis=1)
 
         feature_predictions = self.make_predictions(models_fp_remove, concatenated_features)
-        threshold = 0.0275
-        feature_predictions = (feature_predictions[:,1] > threshold).astype(np.int32)
+        feature_threshold = self.cnfg["thresholds"]['feature']
+        feature_predictions = (feature_predictions[:,1] > feature_threshold).astype(np.int32)
 
-        # Next steps should involve feature generation and processing
         results = self.feature_pass(results, feature_predictions)
 
         return results
