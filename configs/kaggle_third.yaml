@@ -1,14 +1,32 @@
 supports:
   languages: en
-  entities: [STUDENT, EMAIL_ADDRESS, ID_NUM, URL, PHONE_NUMBER]
+  entities: [STUDENT, EMAIL_ADDRESS, ID_NUM, URL, PHONE_NUMBER, ZIP_CODE]
 
 parquets:
   zip_codes:
     path: third_place_zipcodes.parquet
     column: GEOID
-  names:
-    path: third_place_first_and_last_names.parquet
-    column: names
+  first_names:
+    path: third_place_first_names.parquet
+    column: first_name
+  first_name_diff:
+    path: third_place_first_name_minus_10k_words.parquet
+    column: first_name
+  last_names:
+    path: third_place_last_names.parquet
+    column: last_name
+  last_name_diff:
+    path: third_place_last_name_minus_10k_words.parquet
+    column: last_name
+  words_10k:
+    path: third_place_words_10k.parquet
+    column: word
+  words_1k:
+    path: third_place_words_1k.parquet
+    column: word
+  words_popular:
+    path: third_place_words_pop.parquet
+    column: word
 
 black_lists:
   email_extensions: [com, org, gov, net, edu, co, us]
@@ -16,6 +34,12 @@ black_lists:
 
 white_lists:
   url_extensions: [design, life, mind, maps, .gov, medium, amazon, strat, think, learn, model]
+
+thresholds:
+  first_name_high: 51000
+  first_name_low: 2920
+  last_name_high: 49000
+  last_name_low: 2650
 
 delimiters:
   phone_delimiters: [")", "x"]
