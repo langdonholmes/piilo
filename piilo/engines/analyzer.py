@@ -595,11 +595,44 @@ class CustomAnalyzer(AnalyzerEngine):
         provider = NlpEngineProvider(nlp_configuration=configuration)
         nlp_engine = provider.create_engine()
 
-        # add rule-based recognizers
+        # add recognizers
         registry = RecognizerRegistry()
-        # registry.add_recognizer(spacy_recognizer)
+        registry.load_predefined_recognizers(nlp_engine=nlp_engine)
         registry.add_recognizer(kaggle_third_recognizer) # only use custom recongizers
 
         super().__init__(
             nlp_engine=nlp_engine, registry=registry, supported_languages=["en"]
         )
+
+    @staticmethod
+    def prune_results(results: List[RecognizerResult]) -> List[RecognizerResult]:
+        """
+        Remove duplicate results.
+
+        Remove duplicates in case the two results\
+        Adopted from source code
+
+        :param results: List[RecognizerResult]
+        :return: List[RecognizerResult]
+        """
+        results = list(set(results))
+        results = sorted(results, key=lambda x: (x.start, -(x.end - x.start)))
+        filtered_results = []
+
+        for result in results:
+            to_keep = result not in filtered_results  # equals based comparison
+            
+            if to_keep:
+                for filtered in filtered_results:
+                    # If result is contained in or intersected by one of the other results
+                    if (
+                        result.contained_in(filtered)
+                        or result.intersects(filtered)
+                    ):
+                        to_keep = False
+                        break
+
+            if to_keep:
+                filtered_results.append(result)
+
+        return filtered_results

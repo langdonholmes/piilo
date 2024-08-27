@@ -29,7 +29,7 @@ parquets:
     column: word
 
 black_lists:
-  email_extensions: [com, org, gov, net, edu, co, us]
+  email_extensions: [com, org, gov, net, edu, co, us, io, biz, info]
   url_extensions: [wiki, google, coursera]
 
 white_lists:
