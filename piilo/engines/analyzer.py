@@ -8,7 +8,7 @@ import xgboost as xgb
 import pickle
 from sklearn.metrics import fbeta_score
 from sklearn.feature_extraction.text import TfidfVectorizer
-from typing import List, Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union, Dict
 
 from presidio_analyzer import (
     AnalysisExplanation,
@@ -229,7 +229,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         )
 
     def setup_parquets(
-        self, target: str
+        self, 
+        target: str
     ) -> pd.DataFrame:
         """
         Uses the class configuration dictionary and a target column name to load a parquet file 
@@ -248,7 +249,11 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return loaded_parquet
 
     def create_result(
-        self, entity: str, token:spacy.tokens.token.Token, score: float=0.95, explanation: str="Placeholder"
+        self, 
+        entity: str, 
+        token:spacy.tokens.token.Token, 
+        score: float=0.95, 
+        explanation: str="Placeholder"
     ) -> RecognizerResult:
         """
         Create recognizer result object. Assumes token is a spacy token.
@@ -268,7 +273,9 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return thirdplace_results
 
     def build_spacy_explanation(
-        self, original_score: float, explanation: str
+        self, 
+        original_score: float, 
+        explanation: str
     ) -> AnalysisExplanation:
         """
         Create explanation for why this result was detected.
@@ -284,7 +291,9 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return explanation
 
     def generate_padded_name_tokens(
-        self, tokens: spacy.tokens.token.Token, pad_size:int =2
+        self, 
+        tokens: spacy.tokens.token.Token, 
+        pad_size:int =2
     ) -> Tuple[List[int], List[List[str]]]:
         """
         Iterates over tokens to find names and returns:
@@ -307,7 +316,10 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return name_indices, padded_data
 
     def token_pass(
-        self, tokens: spacy.tokens.token.Token, name_indices: List[int], window_size=12
+        self, 
+        tokens: spacy.tokens.token.Token, 
+        name_indices: List[int], 
+        window_size=12
     ) -> Tuple[List[RecognizerResult], List[List[str]], List[List[str]]]:
         """
         Any processing done on the token level should be done here.
@@ -391,8 +403,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
             # Name rules
             if self.names_bl.eq(text).any():
                 # Not sure what name_indices here acheives
-                # Can probably just get rid of name_indices 
-                # and do if: self.first_names_bl.eq(text).any() elif: self.last_names_bl.eq(text).any()
+                # Can probably just get rid of name_indices and do the following:
+                # if: self.first_names_bl.eq(text).any() elif: self.last_names_bl.eq(text).any()
                 if ix in name_indices['first_name_indices']:
                     padded_names.append(padded_text[ix:ix+pad_size*2+1])
                     padded_names_pos.append(padded_pos[ix:ix+pad_size*2+1])
@@ -402,8 +414,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
                     padded_names_pos.append(padded_pos[ix:ix+pad_size*2+1])
                     res = self.create_result("I-NAME_STUDENT", token)
 
-                # Can probably get rid of generate_padding_name_tokens altogether and merge it
-                # into this process
+                # Can probably get rid of generate_padding_name_tokens altogether 
+                # and merge it into this process
 
             if res:
                 results.append(res)
@@ -411,7 +423,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return results, padded_names, padded_names_pos
 
     def generate_features(
-        self, target_strings: List[str]
+        self, 
+        target_strings: List[str]
     ) -> List[Union[int, bool]]:
         """
         Any additional features that are needed for the feature-based approach should be generated here.
@@ -481,6 +494,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return string_feature_list_full
 
     def load_models(self) -> List[xgb.XGBClassifier]:
+        # Loads trained xgboost models
         # TODO: Change this into being controlled by self.cnfg / On second thought, probably unnecessary?
         models_splitter = []
         for model_path in os.listdir("models"):
@@ -504,6 +518,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return models_splitter, models_fp_remove
 
     def load_vectorizers(self) -> Tuple[TfidfVectorizer, TfidfVectorizer]:
+        # loads trained TfidfVectorizers
         # TODO: Change this into being controlled by self.cnfg / Same here
         with open(os.path.join("models", "vectorizer2_raw_final.pkl"), "rb") as m1:
             vectorizer_raw = pickle.load(m1)
@@ -513,15 +528,42 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
         return vectorizer_raw, vectorizer_pt
 
-    def make_predictions(self, models, feat):
+    def make_predictions(
+            self, 
+            models: List[xgb.XGBClassifier], 
+            feat: np.ndarray[Union[int, bool]]
+        ) -> np.array:
         """
-        Make predictions using the models and features. Return average predictions.
+        Make predictions using the xgboost models and features. Return average predictions.
+
+        Takes in two arguments:
+        1. models: list of xgboost models (loaded using load_models)
+        2. feat: np.array of features (generated using generate_features)
         """
         preds = [m.predict_proba(feat) for m in models]
         return sum(preds) / len(models)
 
-    def use_split_data(self, padded_data_predictions, named_indices, threshold: float = 0.9995):
+    def use_split_data(
+            self, 
+            padded_data_predictions: np.array, 
+            named_indices: List[int], 
+            threshold: float = 0.9995
+        ) -> Dict[str, Set[int]]:
+        """
+        Use the split data to determine if a name is a first name or a last name.
+        Returns a dictionary with two sets: first_name_indices and last_name_indices.
+        """
+
         name_indices = {"first_name_indices": set(), "last_name_indices": set()}
+
+        # =========================================================================
+        # Iterate over the predictions
+        # For each prediction where the first element (likely the probability of the target string
+        # not being a name) is less than the threshold, compare the second element (likely the probability
+        # of the target string being a first name) to the third element (likely the probability of the target
+        # string being a last name). Classify the target string into fist name or last name using these
+        # proabilities
+        # =========================================================================
 
         for i in range(padded_data_predictions.shape[0]):
             if padded_data_predictions[i,0] < threshold:
@@ -532,28 +574,33 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         
         return name_indices
 
-    def feature_pass(self, results: List[RecognizerResult], feature_predictions) -> List[RecognizerResult]:
+    def feature_pass(
+            self, 
+            results: List[RecognizerResult], 
+            feature_predictions: np.array
+        ) -> List[RecognizerResult]:
         """
         Any processing done on the feature level should be done here.
+        Takes in two arguments:
+
+        1. results: list of RecognizerResult objects
+        2. feature_predictions: np.array of feature predictions (generated using make_predictions)
+
+        Adjusts the rule-based predictions for names based on the feature predictions.
         """
 
         adjusted_predictions = []
         counter = 0
 
         for res in results:
-            label = res.entity_type
-            if label == "B-NAME_STUDENT":
-                if feature_predictions[counter] > 0:
-                    res.entity_type = "NAME_STUDENT"
-                    adjusted_predictions.append(res)
-            elif label == "I-NAME_STUDENT":
+            if res.entity_type in {"B-NAME_STUDENT", "I-NAME_STUDENT"}:
                 if feature_predictions[counter] > 0:
                     res.entity_type = "NAME_STUDENT"
                     adjusted_predictions.append(res)
                 counter += 1
             else:
                 adjusted_predictions.append(res)
-        
+
         return adjusted_predictions
 
     def analyze(
@@ -577,28 +624,29 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # ==================================================================
         # First pass: find names and return them with a window of pad_size*2 + 1
         # Pad size is set to 2 by default
-        named_indices, padded_data = self.generate_padded_name_tokens(nlp_artifacts.tokens)
+        name_indices, padded_data = self.generate_padded_name_tokens(nlp_artifacts.tokens)
 
         # Generate features for the name tokens
         # Mostly uses string manipulation and dictionary lookups
         name_features = np.array([self.generate_features(x) for x in padded_data])
         
         padded_data_predictions = self.make_predictions(models_splitter, name_features)
-        name_indices = self.use_split_data(padded_data_predictions, named_indices)
+        name_indices = self.use_split_data(padded_data_predictions, name_indices)
 
         # ==================================================================
         # Second pass: token-level processing.
-        results, features, pos_features = self.token_pass(nlp_artifacts.tokens, name_indices)
+        results, padded_names, padded_names_pos = self.token_pass(nlp_artifacts.tokens, name_indices)
 
-        feature_array = np.array([self.generate_features(x) for x in features])
-        tfidf_raw = np.array(vectorizer_raw.transform(features).todense())
-        tfidf_pt = np.array(vectorizer_pt.transform(pos_features).todense())
+        # Generate features using the padded names (raw text; and POS tags) created above and TfIdf vectorizers
+        feature_array = np.array([self.generate_features(x) for x in padded_names])
+        tfidf_raw = np.array(vectorizer_raw.transform(padded_names).todense())
+        tfidf_pt = np.array(vectorizer_pt.transform(padded_names_pos).todense())
+
+        # Concatenate the features
+        concatenated_features = np.concatenate([feature_array, tfidf_raw, tfidf_pt], axis=1)
 
         # ==================================================================
         # Final step: feature-level processing
-
-        concatenated_features = np.concatenate([feature_array, tfidf_raw, tfidf_pt], axis=1)
-
         feature_predictions = self.make_predictions(models_fp_remove, concatenated_features)
         feature_threshold = self.cnfg["thresholds"]['feature']
         feature_predictions = (feature_predictions[:,1] > feature_threshold).astype(np.int32)
