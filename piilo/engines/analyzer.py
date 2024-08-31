@@ -7,7 +7,8 @@ import numpy as np
 import xgboost as xgb
 import pickle
 from sklearn.metrics import fbeta_score
-from typing import List, Optional, Set, Tuple
+from sklearn.feature_extraction.text import TfidfVectorizer
+from typing import List, Optional, Set, Tuple, Union
 
 from presidio_analyzer import (
     AnalysisExplanation,
@@ -284,9 +285,12 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
     def generate_padded_name_tokens(
         self, tokens: spacy.tokens.token.Token, pad_size:int =2
-    ):
+    ) -> Tuple[List[int], List[List[str]]]:
         """
-        Iterates over tokens to find names and returns each hit with a window of pad_size*2 + 1.
+        Iterates over tokens to find names and returns:
+        1. names_indices: a list of indices where names are found
+        2. padded_data: a nested list where the inner lists comprise
+                        a window of string around the found names with a window of pad_size*2 + 1
         """
         pad = ["gfsda"] * pad_size
         padded_text = pad + [w.text for w in tokens] + pad
@@ -303,23 +307,32 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         return name_indices, padded_data
 
     def token_pass(
-        self, tokens, name_indices, window_size=12
-    ):
+        self, tokens: spacy.tokens.token.Token, name_indices: List[int], window_size=12
+    ) -> Tuple[List[RecognizerResult], List[List[str]], List[List[str]]]:
         """
         Any processing done on the token level should be done here.
         Currently comprises two processes:
         1. Application of rule-based approach
         2. Creation of features for feature-based approach
+
+        Currently takes in the following arguments
+        1. tokens: spacy tokens (from the nlp engine)
+        2. name_indices: list of indices where names are found (from generate_padded_name_tokens)
+        3. window_size: size of the window around the name indices (set to 12 by 3rd place winner)
+
+        Returns
+        1. results: list of RecognizerResult objects
+        2. features: list of features for the feature-based approach
+        3. features_pos: list of features for the feature-based approach (POS tags)
         """
 
-        # For holding token-level predictions
+        # For holding token-level predictions (RecognizerResult objects)
         results = []
-        predictions = []
 
         #== For handling all feature-production process ==#
         #== Needs to be done on the token-level ==#
-        features = []
-        features_pos = []
+        padded_names = []
+        padded_names_pos = []
         
         # Configurations
         pad_size = window_size//2
@@ -377,23 +390,29 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
             # Name rules
             if self.names_bl.eq(text).any():
+                # Not sure what name_indices here acheives
+                # Can probably just get rid of name_indices 
+                # and do if: self.first_names_bl.eq(text).any() elif: self.last_names_bl.eq(text).any()
                 if ix in name_indices['first_name_indices']:
-                    features.append(padded_text[ix:ix+pad_size*2+1])
-                    features_pos.append(padded_pos[ix:ix+pad_size*2+1])
+                    padded_names.append(padded_text[ix:ix+pad_size*2+1])
+                    padded_names_pos.append(padded_pos[ix:ix+pad_size*2+1])
                     res = self.create_result("B-NAME_STUDENT", token)
                 elif ix in name_indices['last_name_indices']:
-                    features.append(padded_text[ix:ix+pad_size*2+1])
-                    features_pos.append(padded_pos[ix:ix+pad_size*2+1])
+                    padded_names.append(padded_text[ix:ix+pad_size*2+1])
+                    padded_names_pos.append(padded_pos[ix:ix+pad_size*2+1])
                     res = self.create_result("I-NAME_STUDENT", token)
+
+                # Can probably get rid of generate_padding_name_tokens altogether and merge it
+                # into this process
 
             if res:
                 results.append(res)
 
-        return results, features, features_pos
+        return results, padded_names, padded_names_pos
 
     def generate_features(
         self, target_strings: List[str]
-    ):
+    ) -> List[Union[int, bool]]:
         """
         Any additional features that are needed for the feature-based approach should be generated here.
         Mostly uses string manipulation and dictionary lookups.
@@ -461,8 +480,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
         return string_feature_list_full
 
-    def load_models(self):
-        # TODO: Change this into being controlled by self.cnfg
+    def load_models(self) -> List[xgb.XGBClassifier]:
+        # TODO: Change this into being controlled by self.cnfg / On second thought, probably unnecessary?
         models_splitter = []
         for model_path in os.listdir("models"):
             if "xgb_splitter_final" in model_path:
@@ -476,11 +495,16 @@ class KaggleThirdAnalyzer(LocalRecognizer):
                 m = xgb.XGBClassifier()
                 m.load_model(f"models/{model_path}")
                 models_fp_remove.append(m)
+        
+        # Raise error if models are not found
+        if models_splitter == [] or models_fp_remove == []:
+            logger.error("XGB models not found. Make sure to download them from the Kaggle competition page: https://www.kaggle.com/code/devinanzelmo/piidd-efficiency-3rd-inference/input?select=xgb_final")
+            raise FileNotFoundError(r"XGB models not found. Make sure to download them from the Kaggle competition page: https://www.kaggle.com/code/devinanzelmo/piidd-efficiency-3rd-inference/input?select=xgb_final")
 
         return models_splitter, models_fp_remove
 
-    def load_vectorizers(self):
-        # TODO: Change this into being controlled by self.cnfg
+    def load_vectorizers(self) -> Tuple[TfidfVectorizer, TfidfVectorizer]:
+        # TODO: Change this into being controlled by self.cnfg / Same here
         with open(os.path.join("models", "vectorizer2_raw_final.pkl"), "rb") as m1:
             vectorizer_raw = pickle.load(m1)
 
@@ -508,7 +532,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         
         return name_indices
 
-    def feature_pass(self, results, feature_predictions):
+    def feature_pass(self, results: List[RecognizerResult], feature_predictions) -> List[RecognizerResult]:
         """
         Any processing done on the feature level should be done here.
         """
@@ -534,7 +558,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
     def analyze(
             self, text: str, entities: List[str] = None, nlp_artifacts: NlpArtifacts = None
-        ):
+        ) -> List[RecognizerResult]:
         """Analyze input using Analyzer engine and input arguments (kwargs)."""
 
         results = []
@@ -598,7 +622,7 @@ class CustomAnalyzer(AnalyzerEngine):
         # add recognizers
         registry = RecognizerRegistry()
         registry.load_predefined_recognizers(nlp_engine=nlp_engine)
-        registry.add_recognizer(kaggle_third_recognizer) # only use custom recongizers
+        registry.add_recognizer(kaggle_third_recognizer)
 
         super().__init__(
             nlp_engine=nlp_engine, registry=registry, supported_languages=["en"]
@@ -607,9 +631,8 @@ class CustomAnalyzer(AnalyzerEngine):
     @staticmethod
     def prune_results(results: List[RecognizerResult]) -> List[RecognizerResult]:
         """
-        Remove duplicate results.
-
-        Remove duplicates in case the two results\
+        Prune results to remove overlapping entities.
+        Will keep longer strings over shorter ones.
         Adopted from source code
 
         :param results: List[RecognizerResult]
