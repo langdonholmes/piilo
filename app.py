@@ -17,9 +17,12 @@ warnings.filterwarnings("ignore")
 
 st.set_page_config(page_title="Student Name Detector (English)", layout="wide")
 
+# Pickled vectorizer freaks out if this isn't here
+def identity(x):
+    return x
 
 # Helper methods
-@st.cache(allow_output_mutation=True)
+@st.cache_resource()
 def analyzer_engine():
     """Return AnalyzerEngine and cache with Streamlit."""
 
@@ -31,7 +34,7 @@ def analyzer_engine():
     return CustomAnalyzer(configuration=configuration)
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource()
 def anonymizer_engine():
     """Return generate surrogate anonymizer."""
     return SurrogateAnonymizer()
@@ -104,13 +107,14 @@ if "first_load" not in st.session_state:
 st.subheader("Analyzed")
 with st.spinner("Analyzing..."):
     if button or st.session_state.first_load:
-        st_analyze_results = analyzer_engine().analyze(
+        st_analyze_results = engine.analyze(
             text=st_text,
             entities=st_entities,
             language="en",
             score_threshold=st_threshold,
             return_decision_process=st_return_decision_process,
         )
+        st_analyze_results = engine.prune_results(st_analyze_results)
         annotated_tokens = annotate(st_text, st_analyze_results, st_entities)
         # annotated_tokens
         annotated_text(*annotated_tokens)
