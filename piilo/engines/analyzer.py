@@ -139,10 +139,7 @@ def identity(x):
 # AttributeError: Can't get attribute 'identity' on <module '__main__' >
 class CustomUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
-        if name == 'identity':
-            from piilo.engines.analyzer import identity
-            return identity
-        return super().find_class(module, name)
+        return (lambda x: x) if name == 'identity' else super().find_class(module, name)
 
 class KaggleThirdAnalyzer(LocalRecognizer):
     """
