@@ -1,0 +1,4 @@
+include piilo/configs/*.yaml
+include piilo/data/*.parquet
+include piilo/models/*.pkl
+include piilo/models/*.json

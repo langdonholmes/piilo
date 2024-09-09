@@ -6,9 +6,9 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 import pickle
-from sklearn.metrics import fbeta_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Optional, Set, Tuple, Union, Dict
+import pkg_resources
 
 from presidio_analyzer import (
     AnalysisExplanation,
@@ -20,7 +20,10 @@ from presidio_analyzer import (
 from presidio_analyzer.nlp_engine import NlpArtifacts, NlpEngineProvider
 
 logger = logging.getLogger("presidio-analyzer")
-CONFIG_FILE_PATH = os.path.join("configs", "kaggle_third.yaml")
+CONFIG_FILE_PATH = pkg_resources.resource_filename('piilo', os.path.join("configs", "kaggle_third.yaml"))
+
+def identity(x):
+    return x
 
 # Leaving this in in case we need to use it later
 # class CustomSpacyRecognizer(LocalRecognizer):
@@ -131,6 +134,15 @@ CONFIG_FILE_PATH = os.path.join("configs", "kaggle_third.yaml")
 #         return any(
 #             [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]
 #         )
+
+# Resolves: 
+# AttributeError: Can't get attribute 'identity' on <module '__main__' >
+class CustomUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if name == 'identity':
+            from piilo.engines.analyzer import identity
+            return identity
+        return super().find_class(module, name)
 
 class KaggleThirdAnalyzer(LocalRecognizer):
     """
@@ -244,8 +256,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
             column: str -> name of the relevant column in the parquet file
         """
 
-        loaded_parquet = pd.read_parquet(os.path.join("data", self.cnfg['parquets'][target]['path']))
-
+        loaded_parquet = pd.read_parquet(pkg_resources.resource_filename('piilo', os.path.join("data", self.cnfg['parquets'][target]['path'])))
         return loaded_parquet
 
     def create_result(
@@ -497,17 +508,21 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # Loads trained xgboost models
         # TODO: Change this into being controlled by self.cnfg / On second thought, probably unnecessary?
         models_splitter = []
-        for model_path in os.listdir("models"):
+        models_fp_remove = []
+
+        model_dir = pkg_resources.resource_filename('piilo', "models")
+        
+        for model_path in os.listdir(model_dir):
             if "xgb_splitter_final" in model_path:
+                model = pkg_resources.resource_filename('piilo', os.path.join("models", model_path))
                 m = xgb.XGBClassifier()
-                m.load_model(f"models/{model_path}")
+                m.load_model(model)
                 models_splitter.append(m)
 
-        models_fp_remove = []
-        for model_path in os.listdir("models"):
-            if "xgb_final" in model_path:
+            elif "xgb_final" in model_path:
+                model = pkg_resources.resource_filename('piilo', os.path.join("models", model_path))
                 m = xgb.XGBClassifier()
-                m.load_model(f"models/{model_path}")
+                m.load_model(model)
                 models_fp_remove.append(m)
         
         # Raise error if models are not found
@@ -520,11 +535,12 @@ class KaggleThirdAnalyzer(LocalRecognizer):
     def load_vectorizers(self) -> Tuple[TfidfVectorizer, TfidfVectorizer]:
         # loads trained TfidfVectorizers
         # TODO: Change this into being controlled by self.cnfg / Same here
-        with open(os.path.join("models", "vectorizer2_raw_final.pkl"), "rb") as m1:
-            vectorizer_raw = pickle.load(m1)
 
-        with open(os.path.join("models", "vectorizer2_postags_final.pkl"), "rb") as m2:
-            vectorizer_pt = pickle.load(m2)
+        with open(pkg_resources.resource_filename('piilo', os.path.join("models", "vectorizer2_raw_final.pkl")), "rb") as m1:
+            vectorizer_raw = CustomUnpickler(m1).load()
+
+        with open(pkg_resources.resource_filename('piilo', os.path.join("models", "vectorizer2_postags_final.pkl")), "rb") as m2:
+            vectorizer_pt = CustomUnpickler(m2).load()
 
         return vectorizer_raw, vectorizer_pt
 

@@ -2,10 +2,12 @@ import json
 import logging
 import random
 import re
+import os
 import string
 from collections import defaultdict
 from typing import Literal, Optional
 from urllib.parse import urlparse
+import pkg_resources
 
 import pandas as pd
 from faker import Faker
@@ -35,7 +37,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
         A Presidio anonymizer engine
     """
 
-    names_df_path = "data/ascii_names.parquet"
+    names_df_path = pkg_resources.resource_filename('piilo', os.path.join("data", "ascii_names.parquet"))
     obfuscation_map_path = None
     date_digits = re.compile(r"(?:\d{4}|\d{1,2})")
 
