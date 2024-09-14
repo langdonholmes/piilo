@@ -6,9 +6,9 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 import pickle
-from sklearn.metrics import fbeta_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Optional, Set, Tuple, Union, Dict
+import pkg_resources
 
 from presidio_analyzer import (
     AnalysisExplanation,
@@ -20,7 +20,10 @@ from presidio_analyzer import (
 from presidio_analyzer.nlp_engine import NlpArtifacts, NlpEngineProvider
 
 logger = logging.getLogger("presidio-analyzer")
-CONFIG_FILE_PATH = os.path.join("configs", "kaggle_third.yaml")
+CONFIG_FILE_PATH = pkg_resources.resource_filename('piilo', os.path.join("configs", "kaggle_third.yaml"))
+
+def identity(x):
+    return x
 
 # Leaving this in in case we need to use it later
 # class CustomSpacyRecognizer(LocalRecognizer):
@@ -132,6 +135,12 @@ CONFIG_FILE_PATH = os.path.join("configs", "kaggle_third.yaml")
 #             [entity in egrp and label in lgrp for egrp, lgrp in check_label_groups]
 #         )
 
+# Resolves: 
+# AttributeError: Can't get attribute 'identity' on <module '__main__' >
+class CustomUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        return (lambda x: x) if name == 'identity' else super().find_class(module, name)
+
 class KaggleThirdAnalyzer(LocalRecognizer):
     """
     Custom recognizer adapting the third place winning solution from the Kaggle competition.
@@ -154,7 +163,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # Decided to go with yaml for now since it's a dependency of presidio.
         # Making a switch should be easy if needed.
         with open(config_file_path, 'r') as f:
-            self.cnfg = yaml.safe_load(f)
+            self.cfg = yaml.safe_load(f)
 
         # =======================================
         # Black lists
@@ -162,8 +171,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # ----------------
         # black_lists:
         #   [name_of_relevant_entity]: List[str]
-        self.email_extensions_bl = self.cnfg["black_lists"]['email_extensions']
-        self.url_extensions_bl = self.cnfg["black_lists"]['url_extensions']
+        self.email_extensions_bl = self.cfg["black_lists"]['email_extensions']
+        self.url_extensions_bl = self.cfg["black_lists"]['url_extensions']
         self.zip_codes_bl = self.setup_parquets("zip_codes").iloc[:, 0]
         self.first_names_bl = self.setup_parquets("first_names")
         self.last_names_bl = self.setup_parquets("last_names")
@@ -173,12 +182,12 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # =======================================
         # White lists
         # Whilte lists follow the same structure as black lists.
-        self.url_extensions_wl = self.cnfg["white_lists"]['url_extensions']
+        self.url_extensions_wl = self.cfg["white_lists"]['url_extensions']
         # =======================================
 
         # =======================================
         # Delimiters (anything that can be used to split and identify entities; e.g., phone numbers)
-        self.phone_delimiters = self.cnfg["delimiters"]['phone_delimiters']
+        self.phone_delimiters = self.cfg["delimiters"]['phone_delimiters']
         # =======================================
         
         # =======================================
@@ -188,16 +197,16 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # Separate dataframes for high and low frequency names
         # Thresholds are customizable (set in the configuration file under "thresholds")
         self.first_name_high = self.first_names_bl[
-            self.first_names_bl['count'] >= self.cnfg["thresholds"]['first_name_high']
+            self.first_names_bl['count'] >= self.cfg["thresholds"]['first_name_high']
         ]
         self.first_name_low = self.first_names_bl[
-            self.first_names_bl['count'] >= self.cnfg["thresholds"]['first_name_low']
+            self.first_names_bl['count'] >= self.cfg["thresholds"]['first_name_low']
         ]
         self.last_name_high = self.last_names_bl[
-            self.last_names_bl['count'] >= self.cnfg["thresholds"]['last_name_high']
+            self.last_names_bl['count'] >= self.cfg["thresholds"]['last_name_high']
         ]
         self.last_name_low = self.last_names_bl[
-            self.last_names_bl['count'] >= self.cnfg["thresholds"]['last_name_low']
+            self.last_names_bl['count'] >= self.cfg["thresholds"]['last_name_low']
         ]
 
         # Dictionaries for membership checks and value lookups
@@ -224,8 +233,8 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         self.last_name_diff = set(self.setup_parquets("last_name_diff").iloc[:, 0])
 
         super().__init__(
-            supported_language=self.cnfg["supports"]["languages"],
-            supported_entities=self.cnfg["supports"]["entities"],
+            supported_language=self.cfg["supports"]["languages"],
+            supported_entities=self.cfg["supports"]["entities"],
         )
 
     def setup_parquets(
@@ -244,8 +253,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
             column: str -> name of the relevant column in the parquet file
         """
 
-        loaded_parquet = pd.read_parquet(os.path.join("data", self.cnfg['parquets'][target]['path']))
-
+        loaded_parquet = pd.read_parquet(pkg_resources.resource_filename('piilo', os.path.join("data", self.cfg['parquets'][target]['path'])))
         return loaded_parquet
 
     def create_result(
@@ -495,19 +503,23 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
     def load_models(self) -> List[xgb.XGBClassifier]:
         # Loads trained xgboost models
-        # TODO: Change this into being controlled by self.cnfg / On second thought, probably unnecessary?
+        # TODO: Change this into being controlled by self.cfg / On second thought, probably unnecessary?
         models_splitter = []
-        for model_path in os.listdir("models"):
+        models_fp_remove = []
+
+        model_dir = pkg_resources.resource_filename('piilo', "models")
+        
+        for model_path in os.listdir(model_dir):
             if "xgb_splitter_final" in model_path:
+                model = pkg_resources.resource_filename('piilo', os.path.join("models", model_path))
                 m = xgb.XGBClassifier()
-                m.load_model(f"models/{model_path}")
+                m.load_model(model)
                 models_splitter.append(m)
 
-        models_fp_remove = []
-        for model_path in os.listdir("models"):
-            if "xgb_final" in model_path:
+            elif "xgb_final" in model_path:
+                model = pkg_resources.resource_filename('piilo', os.path.join("models", model_path))
                 m = xgb.XGBClassifier()
-                m.load_model(f"models/{model_path}")
+                m.load_model(model)
                 models_fp_remove.append(m)
         
         # Raise error if models are not found
@@ -519,12 +531,13 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
     def load_vectorizers(self) -> Tuple[TfidfVectorizer, TfidfVectorizer]:
         # loads trained TfidfVectorizers
-        # TODO: Change this into being controlled by self.cnfg / Same here
-        with open(os.path.join("models", "vectorizer2_raw_final.pkl"), "rb") as m1:
-            vectorizer_raw = pickle.load(m1)
+        # TODO: Change this into being controlled by self.cfg / Same here
 
-        with open(os.path.join("models", "vectorizer2_postags_final.pkl"), "rb") as m2:
-            vectorizer_pt = pickle.load(m2)
+        with open(pkg_resources.resource_filename('piilo', os.path.join("models", "vectorizer2_raw_final.pkl")), "rb") as m1:
+            vectorizer_raw = CustomUnpickler(m1).load()
+
+        with open(pkg_resources.resource_filename('piilo', os.path.join("models", "vectorizer2_postags_final.pkl")), "rb") as m2:
+            vectorizer_pt = CustomUnpickler(m2).load()
 
         return vectorizer_raw, vectorizer_pt
 
@@ -648,7 +661,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # ==================================================================
         # Final step: feature-level processing
         feature_predictions = self.make_predictions(models_fp_remove, concatenated_features)
-        feature_threshold = self.cnfg["thresholds"]['feature']
+        feature_threshold = self.cfg["thresholds"]['feature']
         feature_predictions = (feature_predictions[:,1] > feature_threshold).astype(np.int32)
 
         results = self.feature_pass(results, feature_predictions)
