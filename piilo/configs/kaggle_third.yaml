@@ -1,6 +1,7 @@
 supports:
   languages: en
   entities: [NAME_STUDENT, EMAIL_ADDRESS, ID_NUM, URL, PHONE_NUMBER, ZIP_CODE]
+  file_formats: [txt, csv]
 
 parquets:
   zip_codes:

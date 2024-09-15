@@ -9,6 +9,7 @@ import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Optional, Set, Tuple, Union, Dict
 import pkg_resources
+from piilo.configs import piilo_config
 
 from presidio_analyzer import (
     AnalysisExplanation,
@@ -20,7 +21,6 @@ from presidio_analyzer import (
 from presidio_analyzer.nlp_engine import NlpArtifacts, NlpEngineProvider
 
 logger = logging.getLogger("presidio-analyzer")
-CONFIG_FILE_PATH = pkg_resources.resource_filename('piilo', os.path.join("configs", "kaggle_third.yaml"))
 
 def identity(x):
     return x
@@ -155,15 +155,13 @@ class KaggleThirdAnalyzer(LocalRecognizer):
     """
 
     def __init__(
-        self,
-        config_file_path: str = None,
+        self
     ):
         
         # Looked at a few configuration options. 
         # Decided to go with yaml for now since it's a dependency of presidio.
         # Making a switch should be easy if needed.
-        with open(config_file_path, 'r') as f:
-            self.cfg = yaml.safe_load(f)
+        self.cfg = piilo_config
 
         # =======================================
         # Black lists
@@ -674,7 +672,7 @@ class CustomAnalyzer(AnalyzerEngine):
 
     def __init__(self, configuration):
         # spacy_recognizer = CustomSpacyRecognizer()
-        kaggle_third_recognizer = KaggleThirdAnalyzer(config_file_path=CONFIG_FILE_PATH)
+        kaggle_third_recognizer = KaggleThirdAnalyzer()
 
         # Create NLP engine based on configuration
         provider = NlpEngineProvider(nlp_configuration=configuration)

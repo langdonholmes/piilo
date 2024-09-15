@@ -1,21 +1,32 @@
----
-title: Piilo
-emoji: 🏃
-colorFrom: purple
-colorTo: purple
-sdk: streamlit
-sdk_version: 1.10.0
-app_file: app.py
-pinned: false
-license: apache-2.0
----
+# PIILO
+** Personally Identifiable Information Labeling and Obfuscation **
 
-PIILO uses poetry to manage dependencies. To install PIILO, follow these steps:
-1. Clone the repository
-2. Run `poetry install` in the root directory
-3. Run `poetry run streamlit run app.py` to start the app
+## What is PIILO?
+PIILO is an open-source automatic deidentification system for student text. PIILO includes both transformer-based and rule-based systems for labeling PII in student text. One of the core design principles behind PIILO is that obfuscation is as important as labeling PII in text deidentification systems. PIILO implements obfuscation by way of HIPS (hiding in plain sight). It uses a surrogate name generator that automatically obfuscates student names with realistic and contextually plausible surrogate names. 
 
-Once we have a package, users will be able to...
+## Installation
+From your terminal, run:
+
+```bash
+$ pip install piilo
+```
+
+## Use PIILO with a command line interface
+```bash
+$ obfuscate
+```
+
+Here are the arguments you can use
+```
+  --dir DIR             Directory containing text files to anonymize; defaults to the current directory
+  --entities [ENTITIES ...]
+                        Entities to anonymize
+  --language LANGUAGE   Language of the text files; currently only supports 'en'
+  --file_format {csv,txt}
+                        Output file format; currently supports 'csv' and 'txt'
+```
+
+## Use PIILO as a Python package
 ```
 import piilo
 
@@ -28,5 +39,20 @@ results = [piilo.analyze(text) for text in texts]
 cleaned_texts = [piilo.anonymize(text) for text in texts]
 ```
 
-TODO:
-Create a command line version using Typer in this same repository.
+## Use PIILO with a graphic user interface
+You can also download PIILO as an executable from [this link](https://www.linguisticanalysistools.org/piilo.html)
+
+## Cite PIILO
+You can cite PIILO by using the reference below
+
+    @article{holmes2023piilo,
+    title={PIILO: an open-source system for personally identifiable information labeling and obfuscation},
+    author={Holmes, Langdon and Crossley, Scott and Sikka, Harshvardhan and Morris, Wesley},
+    journal={Information and Learning Sciences},
+    volume={124},
+    number={9/10},
+    pages={266--284},
+    year={2023},
+    publisher={Emerald Publishing Limited}
+    }
+
