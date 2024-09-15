@@ -307,6 +307,9 @@ class SurrogateAnonymizer(AnonymizerEngine):
 
     def shuffle_employer(self, pii: str) -> str:
         return self.shuffle_obfuscate(pii, "EMPLOYER")
+    
+    def shuffle_all_names(self, pii: str) -> str:
+        return self.shuffle_obfuscate(pii, "NAMES")
 
     def shuffle_obfuscate(self, pii: str, pii_type: str) -> str:
         """Return a previously seen obfuscated value for the provided pii_type"""
@@ -371,9 +374,13 @@ class SurrogateAnonymizer(AnonymizerEngine):
 
         operators = self._AnonymizerEngine__check_or_add_default_operator(
             {
-                "STUDENT": OperatorConfig(
-                    "custom", {"lambda": self.generate_surrogate_name}
-                ),
+                # "STUDENT": OperatorConfig(
+                #     "custom", {"lambda": self.generate_surrogate_name}
+                # ),
+                # "NAME_INSTRUCTOR": OperatorConfig(
+                #     "custom", {"lambda": self.generate_surrogate_name}
+                # ),
+                # "EMPLOYER": OperatorConfig("custom", {"lambda": self.shuffle_employer}),
                 "EMAIL_ADDRESS": OperatorConfig("custom", {"lambda": self.fake_email}),
                 "PHONE_NUMBER": OperatorConfig("custom", {"lambda": self.fake_phone}),
                 "URL": OperatorConfig("custom", {"lambda": self.fake_url}),
@@ -384,14 +391,13 @@ class SurrogateAnonymizer(AnonymizerEngine):
                 "ID_NUM": OperatorConfig("custom", {"lambda": self.fake_user_id}),
                 "AGE": OperatorConfig("keep", {}),
                 "DATE": OperatorConfig("custom", {"lambda": self.fake_date}),
-                "NAME_INSTRUCTOR": OperatorConfig(
-                    "custom", {"lambda": self.generate_surrogate_name}
-                ),
                 "OTHER": OperatorConfig("custom", {"lambda": self.map_obfuscate}),
                 "LOCATION": OperatorConfig("keep", {}),
-                "EMPLOYER": OperatorConfig("custom", {"lambda": self.shuffle_employer}),
                 "EDUCATION": OperatorConfig(
-                    "custom", {"lambda": self.shuffle_education}
+                    "custom", {"lambda": self.shuffle_education},
+                ),
+                "PERSON": OperatorConfig(
+                    "custom", {"lambda": self.generate_surrogate_name}
                 ),
             }
         )

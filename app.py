@@ -94,7 +94,11 @@ analyzer_load_state.empty()
 
 st_text = st.text_area(
     label="Type in some text",
-    value='Learning Reflection\n\nWritten by John Williams and Samantha Morales\n\nIn this course I learned many things. As Liedtke (2004) said, "Students grow when they learn" (Erickson et al. 1998).\n\nBy John H. Williams -- (714) 328-9989 -- johnwilliams@yahoo.com',
+    value="""   John Smith, living at 123 Elm Street, Springfield, IL 62704, was born on July 5, 1985. His Social Security Number is 123-45-6789. You can contact him via email at john.smith@example.com or by phone at (312) 555-1234.
+    His credit card number is 4111 1111 1111 1111, which expires on 08/25, and the CVV is 123. He also has a driver's license number D1234567 issued by the state of Illinois.
+    John's wife, Mary Ann Smith, was born on February 14, 1988. Her email address is mary.ann.smith@samplemail.com, and her phone number is (217) 555-9876. Mary's SSN is 987-65-4321. They have two children, Emma Smith (born April 2, 2010) and Michael Smith (born September 12, 2013).
+    John's employer, Acme Corp, is located at 456 Maple Ave, Chicago, IL 60601. You can reach the company at (312) 555-7890, or by email at hr@acmecorp.com. His employee ID is JSMITH1234.
+    John's bank account number with Big Bank is 000123456789, and the routing number is 026009593.""",
     height=200,
 )
 

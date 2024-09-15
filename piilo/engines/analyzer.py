@@ -606,7 +606,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         for res in results:
             if res.entity_type in {"B-NAME_STUDENT", "I-NAME_STUDENT"}:
                 if feature_predictions[counter] > 0:
-                    res.entity_type = "NAME_STUDENT"
+                    res.entity_type = "PERSON"
                     adjusted_predictions.append(res)
                 counter += 1
             else:

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 README_FILE = "README.md"
 POETRY_FILE = "poetry.lock"
-VERSION = "0.1.8"
+VERSION = "0.1.9"
 
 with open(README_FILE, 'r') as f:
     long_description = f.read()
