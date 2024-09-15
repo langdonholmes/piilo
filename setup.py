@@ -1,13 +1,15 @@
 import toml
 from setuptools import setup, find_packages
-from pathlib import Path
-import argparse
 
-this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
+README_FILE = "README.md"
+POETRY_FILE = "poetry.lock"
+VERSION = "0.1.8"
+
+with open(README_FILE, 'r') as f:
+    long_description = f.read()
 
 def extract_dependencies_from_poetry_lock():
-    with open('poetry.lock', 'r') as lock_file:
+    with open(POETRY_FILE, 'r') as lock_file:
         lock_data = toml.load(lock_file)
     
     dependencies = []
@@ -25,7 +27,7 @@ install_requires = extract_dependencies_from_poetry_lock()
 
 setup(
     name='piilo',
-    version='0.1.7',
+    version=VERSION,
     packages=find_packages(),
     include_package_data=True,
     package_data={
