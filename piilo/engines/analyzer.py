@@ -637,10 +637,14 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # Pad size is set to 2 by default
         name_indices, padded_data = self.generate_padded_name_tokens(nlp_artifacts.tokens)
 
+        # Early stop if no names are found
+        if padded_data == []:
+            return results
+
         # Generate features for the name tokens
         # Mostly uses string manipulation and dictionary lookups
         name_features = np.array([self.generate_features(x) for x in padded_data])
-        
+
         padded_data_predictions = self.make_predictions(models_splitter, name_features)
         name_indices = self.use_split_data(padded_data_predictions, name_indices)
 
