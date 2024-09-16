@@ -1,8 +1,15 @@
 import toml
 from setuptools import setup, find_packages
 
+README_FILE = "README.md"
+POETRY_FILE = "poetry.lock"
+VERSION = "0.1.9"
+
+with open(README_FILE, 'r') as f:
+    long_description = f.read()
+
 def extract_dependencies_from_poetry_lock():
-    with open('poetry.lock', 'r') as lock_file:
+    with open(POETRY_FILE, 'r') as lock_file:
         lock_data = toml.load(lock_file)
     
     dependencies = []
@@ -18,12 +25,9 @@ def extract_dependencies_from_poetry_lock():
 
 install_requires = extract_dependencies_from_poetry_lock()
 
-# Monkey patch before including xgboost in poetry.lock:
-install_requires += ['xgboost==2.0.3', 'scikit-learn==1.5.1']
-
 setup(
     name='piilo',
-    version='0.1.6',
+    version=VERSION,
     packages=find_packages(),
     include_package_data=True,
     package_data={
@@ -32,4 +36,11 @@ setup(
         "piilo.models": ["*.pkl", "*.json"],
     },
     install_requires=install_requires,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    entry_points={
+        "console_scripts": [
+            "obfuscate=piilo:anonymize_batch_cli",
+        ],
+    },
 )

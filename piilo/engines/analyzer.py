@@ -9,6 +9,7 @@ import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Optional, Set, Tuple, Union, Dict
 import pkg_resources
+from piilo.configs import piilo_config
 
 from presidio_analyzer import (
     AnalysisExplanation,
@@ -20,7 +21,6 @@ from presidio_analyzer import (
 from presidio_analyzer.nlp_engine import NlpArtifacts, NlpEngineProvider
 
 logger = logging.getLogger("presidio-analyzer")
-CONFIG_FILE_PATH = pkg_resources.resource_filename('piilo', os.path.join("configs", "kaggle_third.yaml"))
 
 def identity(x):
     return x
@@ -155,15 +155,13 @@ class KaggleThirdAnalyzer(LocalRecognizer):
     """
 
     def __init__(
-        self,
-        config_file_path: str = None,
+        self
     ):
         
         # Looked at a few configuration options. 
         # Decided to go with yaml for now since it's a dependency of presidio.
         # Making a switch should be easy if needed.
-        with open(config_file_path, 'r') as f:
-            self.cfg = yaml.safe_load(f)
+        self.cfg = piilo_config
 
         # =======================================
         # Black lists
@@ -608,7 +606,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         for res in results:
             if res.entity_type in {"B-NAME_STUDENT", "I-NAME_STUDENT"}:
                 if feature_predictions[counter] > 0:
-                    res.entity_type = "NAME_STUDENT"
+                    res.entity_type = "PERSON"
                     adjusted_predictions.append(res)
                 counter += 1
             else:
@@ -639,10 +637,14 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # Pad size is set to 2 by default
         name_indices, padded_data = self.generate_padded_name_tokens(nlp_artifacts.tokens)
 
+        # Early stop if no names are found
+        if padded_data == []:
+            return results
+
         # Generate features for the name tokens
         # Mostly uses string manipulation and dictionary lookups
         name_features = np.array([self.generate_features(x) for x in padded_data])
-        
+
         padded_data_predictions = self.make_predictions(models_splitter, name_features)
         name_indices = self.use_split_data(padded_data_predictions, name_indices)
 
@@ -674,7 +676,7 @@ class CustomAnalyzer(AnalyzerEngine):
 
     def __init__(self, configuration):
         # spacy_recognizer = CustomSpacyRecognizer()
-        kaggle_third_recognizer = KaggleThirdAnalyzer(config_file_path=CONFIG_FILE_PATH)
+        kaggle_third_recognizer = KaggleThirdAnalyzer()
 
         # Create NLP engine based on configuration
         provider = NlpEngineProvider(nlp_configuration=configuration)
