@@ -99,6 +99,7 @@ def anonymize_batch(dir: str, entities=cfg['supports']['entities'], language="en
             output_file = os.path.join(dir, f"{file_name}_anonymized.txt")
             with open(output_file, 'w', encoding="utf-8") as f:
                 f.write(anonymized_text)
+                
     elif file_format == "csv":
         output_file = os.path.join(dir, "anonymized_results.csv")
         df = pd.DataFrame(res, columns=["file_name", "anonymized_text"])

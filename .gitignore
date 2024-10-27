@@ -2,3 +2,6 @@
 __pycache__
 data/
 models/
+dist/
+build/
+piilo.egg-info/

@@ -1,5 +1,5 @@
 # PIILO
-** Personally Identifiable Information Labeling and Obfuscation **
+**Personally Identifiable Information Labeling and Obfuscation**
 
 ## What is PIILO?
 PIILO is an open-source automatic deidentification system for student text. PIILO includes both transformer-based and rule-based systems for labeling PII in student text. One of the core design principles behind PIILO is that obfuscation is as important as labeling PII in text deidentification systems. PIILO implements obfuscation by way of HIPS (hiding in plain sight). It uses a surrogate name generator that automatically obfuscates student names with realistic and contextually plausible surrogate names. 
@@ -27,7 +27,7 @@ Here are the arguments you can use
 ```
 
 ## Use PIILO as a Python package
-```
+```python
 import piilo
 
 texts = ['test string without identifiers', 'My name is Antonio. Email: Antonio99@yahoo.com']
