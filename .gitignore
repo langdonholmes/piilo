@@ -4,6 +4,5 @@ data/
 models/
 dist/
 build/
-piilo.egg-info/piilo.egg-info/
 piilo.egg-info/
 .DS_Store
