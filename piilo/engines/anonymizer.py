@@ -1,15 +1,15 @@
 import json
 import logging
+import os
 import random
 import re
-import os
 import string
 from collections import defaultdict
 from typing import Literal, Optional
 from urllib.parse import urlparse
-import pkg_resources
 
 import pandas as pd
+import pkg_resources
 from faker import Faker
 from nameparser import HumanName
 from presidio_anonymizer import AnonymizerEngine
@@ -37,7 +37,9 @@ class SurrogateAnonymizer(AnonymizerEngine):
         A Presidio anonymizer engine
     """
 
-    names_df_path = pkg_resources.resource_filename('piilo', os.path.join("data", "ascii_names.parquet"))
+    names_df_path = pkg_resources.resource_filename(
+        "piilo", os.path.join("data", "ascii_names.parquet")
+    )
     obfuscation_map_path = None
     date_digits = re.compile(r"(?:\d{4}|\d{1,2})")
 
@@ -307,7 +309,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
 
     def shuffle_employer(self, pii: str) -> str:
         return self.shuffle_obfuscate(pii, "EMPLOYER")
-    
+
     def shuffle_all_names(self, pii: str) -> str:
         return self.shuffle_obfuscate(pii, "NAMES")
 
@@ -394,7 +396,8 @@ class SurrogateAnonymizer(AnonymizerEngine):
                 "OTHER": OperatorConfig("custom", {"lambda": self.map_obfuscate}),
                 "LOCATION": OperatorConfig("keep", {}),
                 "EDUCATION": OperatorConfig(
-                    "custom", {"lambda": self.shuffle_education},
+                    "custom",
+                    {"lambda": self.shuffle_education},
                 ),
                 "PERSON": OperatorConfig(
                     "custom", {"lambda": self.generate_surrogate_name}

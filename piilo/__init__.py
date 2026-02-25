@@ -1,5 +1,12 @@
-from .main import analyze, anonymize, anonymize_batch, get_anonymize, anonymize_batch_cli
 import spacy
+
+from .main import (
+    analyze,
+    anonymize,
+    anonymize_batch,
+    anonymize_batch_cli,
+    get_anonymize,
+)
 
 # en_core_web_sm as a dependency requires external link
 # which does not play nice with CLI
