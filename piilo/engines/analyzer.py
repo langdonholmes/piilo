@@ -47,6 +47,17 @@ class KaggleThirdAnalyzer(LocalRecognizer):
     and a feature-based approach.
     """
 
+    # Entities this recognizer can emit. Must stay in step with the labels passed
+    # to create_result, and with the operators SurrogateAnonymizer defines for them.
+    ENTITIES = [
+        "PERSON",
+        "EMAIL_ADDRESS",
+        "ID_NUM",
+        "URL",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS",
+    ]
+
     def __init__(self):
 
         # Looked at a few configuration options.
@@ -146,7 +157,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
 
         super().__init__(
             supported_language=self.cfg["supports"]["languages"],
-            supported_entities=self.cfg["supports"]["entities"],
+            supported_entities=self.ENTITIES,
         )
 
     def setup_parquets(self, target: str) -> pd.DataFrame:

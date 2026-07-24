@@ -59,9 +59,7 @@ def get_anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
     return anonymize_response
 
 
-def anonymize_batch(
-    dir: str, entities=cfg["supports"]["entities"], language="en", file_format="csv"
-) -> None:
+def anonymize_batch(dir: str, entities=None, language="en", file_format="csv") -> None:
     """
     Anonymize all files in a directory and return as csv or text files.
     """
@@ -86,6 +84,10 @@ def anonymize_batch(
         no_files_err_msg = f"Directory {dir} does not contain any text files."
         if dir == os.getcwd():
             raise ValueError(
+
+    Passing entities=None runs every recognizer, which is what the package-level
+    anonymize() does. Restricting entities drops Presidio's own recognizers and
+    with them the multi-token name spans, so surnames survive into the output.
                 no_files_err_msg
                 + " You did not enter any directory so we used your current directory as default."
             )

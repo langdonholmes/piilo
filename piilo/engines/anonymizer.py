@@ -389,7 +389,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
                 "USERNAME": OperatorConfig("custom", {"lambda": self.fake_username}),
                 "ID_NUM": OperatorConfig("custom", {"lambda": self.fake_user_id}),
                 "AGE": OperatorConfig("keep", {}),
-                "DATE": OperatorConfig("custom", {"lambda": self.fake_date}),
+                "DATE_TIME": OperatorConfig("custom", {"lambda": self.fake_date}),
                 "OTHER": OperatorConfig("custom", {"lambda": self.map_obfuscate}),
                 "LOCATION": OperatorConfig("keep", {}),
                 "EDUCATION": OperatorConfig(
