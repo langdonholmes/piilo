@@ -17,9 +17,11 @@ warnings.filterwarnings("ignore")
 
 st.set_page_config(page_title="Student Name Detector (English)", layout="wide")
 
+
 # Pickled vectorizer freaks out if this isn't here
 def identity(x):
     return x
+
 
 # Helper methods
 @st.cache_resource()

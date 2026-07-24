@@ -84,6 +84,10 @@ def get_anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
 def anonymize_batch(dir: str, entities=None, language="en", file_format="csv") -> None:
     """
     Anonymize all files in a directory and return as csv or text files.
+
+    Passing entities=None runs every recognizer, which is what the package-level
+    anonymize() does. Restricting entities drops Presidio's own recognizers and
+    with them the multi-token name spans, so surnames survive into the output.
     """
 
     res = []
@@ -106,10 +110,6 @@ def anonymize_batch(dir: str, entities=None, language="en", file_format="csv") -
         no_files_err_msg = f"Directory {dir} does not contain any text files."
         if dir == os.getcwd():
             raise ValueError(
-
-    Passing entities=None runs every recognizer, which is what the package-level
-    anonymize() does. Restricting entities drops Presidio's own recognizers and
-    with them the multi-token name spans, so surnames survive into the output.
                 no_files_err_msg
                 + " You did not enter any directory so we used your current directory as default."
             )
@@ -139,7 +139,7 @@ def anonymize_batch(dir: str, entities=None, language="en", file_format="csv") -
             output_file = os.path.join(dir, f"{file_name}_anonymized.txt")
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write(anonymized_text)
-                
+
     elif file_format == "csv":
         output_file = os.path.join(dir, "anonymized_results.csv")
         df = pd.DataFrame(res, columns=["file_name", "anonymized_text"])

@@ -592,16 +592,16 @@ class KaggleThirdAnalyzer(LocalRecognizer):
             nlp_artifacts.tokens, name_indices
         )
 
-        # Generate features using the padded names (raw text; and POS tags) created above and TfIdf vectorizers
-        feature_array = np.array([self.generate_features(x) for x in padded_names])
-        tfidf_raw = np.array(vectorizer_raw.transform(padded_names).todense())
-        tfidf_pt = np.array(vectorizer_pt.transform(padded_names_pos).todense())
-
         # The splitter can reject every candidate from the first pass, leaving no
         # names to score. The rule-based hits in `results` still stand, and the
         # vectorizers below reject empty input, so stop here.
         if padded_names == []:
             return results
+
+        # Generate features using the padded names (raw text; and POS tags) created above and TfIdf vectorizers
+        feature_array = np.array([self.generate_features(x) for x in padded_names])
+        tfidf_raw = np.array(vectorizer_raw.transform(padded_names).todense())
+        tfidf_pt = np.array(vectorizer_pt.transform(padded_names_pos).todense())
 
         # Concatenate the features
         concatenated_features = np.concatenate(
