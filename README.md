@@ -41,12 +41,14 @@ features rather than a transformer.
 ## Installation
 
 ```bash
-pip install piilo
+pip install piilo-anonymizer
 ```
 
-The name tables and XGBoost models PIILO needs (roughly 120 MB) are bundled in
-the release, so `pip install` gives a fully working package with nothing else to
-download.
+The package is distributed as `piilo-anonymizer` on PyPI, but you still
+`import piilo` and run the `obfuscate` command — the shorter name was already
+taken. The name tables and XGBoost models PIILO needs (roughly 120 MB) are
+bundled in the release, so `pip install` gives a fully working package with
+nothing else to download.
 
 On macOS, XGBoost also needs the OpenMP runtime: `brew install libomp`.
 
