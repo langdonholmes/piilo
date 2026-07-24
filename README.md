@@ -40,21 +40,20 @@ features rather than a transformer.
 
 ## Installation
 
-PIILO is not currently published on PyPI. Install from source:
-
 ```bash
-git clone https://github.com/langdonholmes/piilo.git
-cd piilo
-pip install -e .
+pip install piilo
 ```
 
-> **Note**
-> PIILO depends on name tables and XGBoost models totalling roughly 120 MB that
-> are not stored in this repository. See [DEV_README.md](DEV_README.md) for
-> download links and where to place them. Without these files PIILO imports
-> successfully but cannot analyze text.
+The name tables and XGBoost models PIILO needs (roughly 120 MB) are bundled in
+the release, so `pip install` gives a fully working package with nothing else to
+download.
 
 On macOS, XGBoost also needs the OpenMP runtime: `brew install libomp`.
+
+> **Note**
+> Those model files are **not** stored in the git repository, only in the
+> published package. If you install from a clone (`pip install -e .`) you must
+> fetch them separately — see [DEV_README.md](DEV_README.md).
 
 ## Usage
 
