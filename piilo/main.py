@@ -149,7 +149,10 @@ def anonymize_batch(dir: str, entities=None, language="en", file_format="csv") -
 
 
 def anonymize_batch_cli():
+    from piilo import __version__
+
     parser = argparse.ArgumentParser(description="Anonymize text files in a directory.")
+    parser.add_argument("--version", action="version", version=f"piilo {__version__}")
     parser.add_argument(
         "--dir",
         type=str,
