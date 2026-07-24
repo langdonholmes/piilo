@@ -2,12 +2,10 @@ import json
 import logging
 import random
 import re
-import os
 import string
 from collections import defaultdict
 from typing import Literal, Optional
 from urllib.parse import urlparse
-import pkg_resources
 
 import pandas as pd
 from faker import Faker
@@ -18,6 +16,7 @@ from presidio_anonymizer.operators import OperatorType
 from spacy.tokens import Doc
 
 from piilo.engines.name_getter import NameGetter
+from piilo.resources import package_path
 
 logger = logging.getLogger("obfuscator")
 
@@ -37,7 +36,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
         A Presidio anonymizer engine
     """
 
-    names_df_path = pkg_resources.resource_filename('piilo', os.path.join("data", "ascii_names.parquet"))
+    names_df_path = package_path("data", "ascii_names.parquet")
     obfuscation_map_path = None
     date_digits = re.compile(r"(?:\d{4}|\d{1,2})")
 
@@ -299,14 +298,8 @@ class SurrogateAnonymizer(AnonymizerEngine):
         self._operator_log(pii, surrogate)
         return surrogate
 
-    def shuffle_location(self, pii: str) -> str:
-        return self.shuffle_obfuscate(pii, "LOCATION")
-
     def shuffle_education(self, pii: str) -> str:
         return self.shuffle_obfuscate(pii, "EDUCATION")
-
-    def shuffle_employer(self, pii: str) -> str:
-        return self.shuffle_obfuscate(pii, "EMPLOYER")
 
     def shuffle_obfuscate(self, pii: str, pii_type: str) -> str:
         """Return a previously seen obfuscated value for the provided pii_type"""
@@ -371,9 +364,6 @@ class SurrogateAnonymizer(AnonymizerEngine):
 
         operators = self._AnonymizerEngine__check_or_add_default_operator(
             {
-                "STUDENT": OperatorConfig(
-                    "custom", {"lambda": self.generate_surrogate_name}
-                ),
                 "EMAIL_ADDRESS": OperatorConfig("custom", {"lambda": self.fake_email}),
                 "PHONE_NUMBER": OperatorConfig("custom", {"lambda": self.fake_phone}),
                 "URL": OperatorConfig("custom", {"lambda": self.fake_url}),
@@ -383,15 +373,15 @@ class SurrogateAnonymizer(AnonymizerEngine):
                 "USERNAME": OperatorConfig("custom", {"lambda": self.fake_username}),
                 "ID_NUM": OperatorConfig("custom", {"lambda": self.fake_user_id}),
                 "AGE": OperatorConfig("keep", {}),
-                "DATE": OperatorConfig("custom", {"lambda": self.fake_date}),
-                "NAME_INSTRUCTOR": OperatorConfig(
-                    "custom", {"lambda": self.generate_surrogate_name}
-                ),
+                "DATE_TIME": OperatorConfig("custom", {"lambda": self.fake_date}),
                 "OTHER": OperatorConfig("custom", {"lambda": self.map_obfuscate}),
                 "LOCATION": OperatorConfig("keep", {}),
-                "EMPLOYER": OperatorConfig("custom", {"lambda": self.shuffle_employer}),
                 "EDUCATION": OperatorConfig(
-                    "custom", {"lambda": self.shuffle_education}
+                    "custom",
+                    {"lambda": self.shuffle_education},
+                ),
+                "PERSON": OperatorConfig(
+                    "custom", {"lambda": self.generate_surrogate_name}
                 ),
             }
         )
