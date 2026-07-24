@@ -84,10 +84,14 @@ You will need an API token from the respective repository. You can use `pip` to 
 
 ```
 # For testpypi
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ piilo
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ piilo-anonymizer
 # For pypi
-pip install piilo
+pip install piilo-anonymizer
 ```
+
+The distribution is named `piilo-anonymizer` on PyPI (the shorter `piilo` was
+rejected as too similar to an existing project), but the import package and the
+`obfuscate` entry point are unchanged.
 
 ## PIILO as a Package: Overview
 

@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src="logo.png" alt="PIILO logo" width="140">
+<img src="https://raw.githubusercontent.com/langdonholmes/piilo/main/logo.png" alt="PIILO logo" width="140">
 
 # PIILO
 
 **P**ersonally **I**dentifiable **I**nformation **L**abeling and **O**bfuscation
 
 [![Tests](https://github.com/langdonholmes/piilo/actions/workflows/ci.yml/badge.svg)](https://github.com/langdonholmes/piilo/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/langdonholmes/piilo/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Paper](https://img.shields.io/badge/paper-ILS%202023-b31b1b.svg)](https://doi.org/10.1108/ILS-04-2023-0032)
 
@@ -40,21 +40,22 @@ features rather than a transformer.
 
 ## Installation
 
-PIILO is not currently published on PyPI. Install from source:
-
 ```bash
-git clone https://github.com/langdonholmes/piilo.git
-cd piilo
-pip install -e .
+pip install piilo-anonymizer
 ```
 
-> **Note**
-> PIILO depends on name tables and XGBoost models totalling roughly 120 MB that
-> are not stored in this repository. See [DEV_README.md](DEV_README.md) for
-> download links and where to place them. Without these files PIILO imports
-> successfully but cannot analyze text.
+The package is distributed as `piilo-anonymizer` on PyPI, but you still
+`import piilo` and run the `obfuscate` command — the shorter name was already
+taken. The name tables and XGBoost models PIILO needs (roughly 120 MB) are
+bundled in the release, so `pip install` gives a fully working package with
+nothing else to download.
 
 On macOS, XGBoost also needs the OpenMP runtime: `brew install libomp`.
+
+> **Note**
+> Those model files are **not** stored in the git repository, only in the
+> published package. If you install from a clone (`pip install -e .`) you must
+> fetch them separately — see [DEV_README.md](https://github.com/langdonholmes/piilo/blob/main/DEV_README.md).
 
 ## Usage
 
@@ -123,8 +124,8 @@ the same surrogate, so coreference survives deidentification.
 
 ## Development
 
-See [DEV_README.md](DEV_README.md) for the package layout, how to obtain the
-model files, and how to build a release.
+See [DEV_README.md](https://github.com/langdonholmes/piilo/blob/main/DEV_README.md)
+for the package layout, how to obtain the model files, and how to build a release.
 
 ```bash
 pip install -e ".[dev]"
@@ -153,4 +154,4 @@ If you use PIILO in your research, please cite:
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](https://github.com/langdonholmes/piilo/blob/main/LICENSE).
