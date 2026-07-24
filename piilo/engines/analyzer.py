@@ -5,7 +5,6 @@ from typing import Dict, List, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 import spacy
 import xgboost as xgb
 from presidio_analyzer import (
@@ -19,6 +18,7 @@ from presidio_analyzer.nlp_engine import NlpArtifacts, NlpEngineProvider
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from piilo.configs import piilo_config
+from piilo.resources import package_path
 
 logger = logging.getLogger("presidio-analyzer")
 
@@ -163,9 +163,7 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         """
 
         loaded_parquet = pd.read_parquet(
-            pkg_resources.resource_filename(
-                "piilo", os.path.join("data", self.cfg["parquets"][target]["path"])
-            )
+            package_path("data", self.cfg["parquets"][target]["path"])
         )
         return loaded_parquet
 
@@ -429,23 +427,17 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         models_splitter = []
         models_fp_remove = []
 
-        model_dir = pkg_resources.resource_filename("piilo", "models")
+        model_dir = package_path("models")
 
-        for model_path in os.listdir(model_dir):
+        for model_path in sorted(os.listdir(model_dir)):
             if "xgb_splitter_final" in model_path:
-                model = pkg_resources.resource_filename(
-                    "piilo", os.path.join("models", model_path)
-                )
                 m = xgb.XGBClassifier()
-                m.load_model(model)
+                m.load_model(model_dir / model_path)
                 models_splitter.append(m)
 
             elif "xgb_final" in model_path:
-                model = pkg_resources.resource_filename(
-                    "piilo", os.path.join("models", model_path)
-                )
                 m = xgb.XGBClassifier()
-                m.load_model(model)
+                m.load_model(model_dir / model_path)
                 models_fp_remove.append(m)
 
         # Raise error if models are not found
@@ -463,20 +455,10 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         # loads trained TfidfVectorizers
         # TODO: Change this into being controlled by self.cfg / Same here
 
-        with open(
-            pkg_resources.resource_filename(
-                "piilo", os.path.join("models", "vectorizer2_raw_final.pkl")
-            ),
-            "rb",
-        ) as m1:
+        with open(package_path("models", "vectorizer2_raw_final.pkl"), "rb") as m1:
             vectorizer_raw = CustomUnpickler(m1).load()
 
-        with open(
-            pkg_resources.resource_filename(
-                "piilo", os.path.join("models", "vectorizer2_postags_final.pkl")
-            ),
-            "rb",
-        ) as m2:
+        with open(package_path("models", "vectorizer2_postags_final.pkl"), "rb") as m2:
             vectorizer_pt = CustomUnpickler(m2).load()
 
         return vectorizer_raw, vectorizer_pt

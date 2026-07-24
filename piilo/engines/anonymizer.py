@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import random
 import re
 import string
@@ -9,7 +8,6 @@ from typing import Literal, Optional
 from urllib.parse import urlparse
 
 import pandas as pd
-import pkg_resources
 from faker import Faker
 from nameparser import HumanName
 from presidio_anonymizer import AnonymizerEngine
@@ -18,6 +16,7 @@ from presidio_anonymizer.operators import OperatorType
 from spacy.tokens import Doc
 
 from piilo.engines.name_getter import NameGetter
+from piilo.resources import package_path
 
 logger = logging.getLogger("obfuscator")
 
@@ -37,9 +36,7 @@ class SurrogateAnonymizer(AnonymizerEngine):
         A Presidio anonymizer engine
     """
 
-    names_df_path = pkg_resources.resource_filename(
-        "piilo", os.path.join("data", "ascii_names.parquet")
-    )
+    names_df_path = package_path("data", "ascii_names.parquet")
     obfuscation_map_path = None
     date_digits = re.compile(r"(?:\d{4}|\d{1,2})")
 
