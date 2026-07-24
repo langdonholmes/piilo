@@ -592,6 +592,12 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         tfidf_raw = np.array(vectorizer_raw.transform(padded_names).todense())
         tfidf_pt = np.array(vectorizer_pt.transform(padded_names_pos).todense())
 
+        # The splitter can reject every candidate from the first pass, leaving no
+        # names to score. The rule-based hits in `results` still stand, and the
+        # vectorizers below reject empty input, so stop here.
+        if padded_names == []:
+            return results
+
         # Concatenate the features
         concatenated_features = np.concatenate(
             [feature_array, tfidf_raw, tfidf_pt], axis=1
