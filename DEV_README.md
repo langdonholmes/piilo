@@ -4,22 +4,40 @@ This `readme` file is intended to help developers navigate through PIILO.
 
 # Getting Started
 
-## Using Poetry
+## Installing
 
-Version control for this package relies on [Poetry](https://python-poetry.org/). You can activate the environment and install the dependencies defined in `poetry.lock` (or `pyproject.toml` if there is no `poetry.lock`) by running:
+Project metadata and dependencies live in `pyproject.toml` (PEP 621). Create a
+virtual environment and install the package in editable mode:
 
 ```bash
-poetry shell
-poetry install
+python -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[dev,app]"
 ```
+
+The `dev` extra adds `pytest`, `black`, and `isort`; the `app` extra adds
+Streamlit for `app.py`.
+
+On macOS, XGBoost requires the OpenMP runtime: `brew install libomp`.
 
 ## Getting Required Resources
 
-Certain files are too big to be included in this repo. These files are automatically downloaded if you are accessing the package through `pip`. If you are a developer working with this repo, you can access these files individually from the following links:
+Certain files are too big to be included in this repo. They are bundled into
+built distributions via `package-data`, so they must be present locally before
+you build a release. Download them individually from the following links:
 
-Download the `xgb` models and `vectorizers` from [this link](https://www.kaggle.com/code/devinanzelmo/piidd-efficiency-3rd-inference/input?select=xgb_final) and add them to `piilo\data`.
+Download the `xgb` models and `vectorizers` from [this link](https://www.kaggle.com/code/devinanzelmo/piidd-efficiency-3rd-inference/input?select=xgb_final) and add them to `piilo/models`.
 
-Download `parquet` files from [this link](https://drive.google.com/drive/folders/1Ru3bLULgt-FhqgaL90uoAV69pHOZ5el0?usp=drive_link) and add them to `piilo\data`.
+Download `parquet` files from [this link](https://drive.google.com/drive/folders/1Ru3bLULgt-FhqgaL90uoAV69pHOZ5el0?usp=drive_link) and add them to `piilo/data`.
+
+## Running the Tests
+
+```bash
+pytest
+```
+
+Tests that need the model files above skip automatically when the files are
+absent, which is how CI runs them.
 
 # PIILO as a Package
 
@@ -27,26 +45,31 @@ Download `parquet` files from [this link](https://drive.google.com/drive/folders
 
 ```
 piilo
-├── setup.py  
+├── pyproject.toml  # metadata, dependencies, entry point, tool config
 ├── README.md
-├── app.py  # used for a Streamlit GUI; not a part of the package
+├── app.py          # Streamlit GUI; not part of the package
+├── tests
 └── piilo
     ├── __init__.py
-    ├── data 
-    ├── engines 
-    ├── models
-    └── configs
+    ├── main.py     # public API: analyze, anonymize, anonymize_batch
+    ├── resources.py # locates bundled data files
+    ├── data        # parquet name tables (not in git)
+    ├── engines     # analyzer and anonymizer
+    ├── models      # pydantic schemas + xgboost artifacts (not in git)
+    └── configs     # kaggle_third.yaml
 ```
 
 ## Building and Uploading PIILO as a Package
 
-Use the packages `setuptools` and `wheels` to build wheels. Make sure to update the `VERSION` variable value in `setup.py` before you run the command to ensure that you are assigning a higher version number to the current build.
+Bump `version` in `pyproject.toml`, then build with the standard `build`
+frontend:
 
 ```bash
-python setup.py sdist bdist_wheel
+pip install build
+python -m build
 ```
 
-Running the command above from a CLI will create the folders `dist`, `build`, and `piilo.egg-info` each containing distributables, temporary files from the build process, and package metadata. 
+This creates a `dist` folder containing an sdist and a wheel.
 
 Then, run the following command to upload to PyPI or Test PyPI:
 
@@ -72,7 +95,9 @@ PIILO has two different engines: an `analyzer` and an `anonymizer`. The `analyze
 
 The main functions available in the PIILO package are defined in `main.py`. 
 
-The `analyze` function takes in a raw string as an argument, and uses a custom analyzer object to create a list of `RecognizerResult` objects. This object specified the `entity_type` of the PII and the start and end indices of the PII within the text. Currently, the custom analyzer uses a `spacy` model (`en_core_web_sm`) and a customized model (from the Kaggle competition) to find and tag PII, then prunes the results to remove duplicate tags (i.e., cases where PII was tagged by both models). To add more custom models to this pipeline, define a custom `LocalRecognizer` object in `analyze.py`, then add the model to `CustomAnalyzer` using `registry.add_recognizer(<name_of_new_model>)`. To modify the pruning behavior, change the `prune_results` static method for `CustomAnalyzer`. Refer to the [presidio doc](https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/recognizer_result.py) for more detail.
+The `analyze` function takes in a raw string as an argument, and uses a custom analyzer object to create a list of `RecognizerResult` objects. This object specifies the `entity_type` of the PII and the start and end indices of the PII within the text. Currently, the custom analyzer uses a `spacy` model (`en_core_web_sm`) and a customized model (from the Kaggle competition) to find and tag PII. Because both models run, `analyze` can return several overlapping spans for the same name; `SurrogateAnonymizer` merges them before obfuscating. `CustomAnalyzer.prune_results` collapses those overlaps into the longest span and is applied by the Streamlit app for display — call it yourself if you need deduplicated spans. To add more custom models to this pipeline, define a custom `LocalRecognizer` object in `analyzer.py`, then add the model to `CustomAnalyzer` using `registry.add_recognizer(<name_of_new_model>)`. Refer to the [presidio doc](https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/recognizer_result.py) for more detail.
+
+Any recognizer added this way must declare every entity label it can emit (see `KaggleThirdAnalyzer.ENTITIES`). A label that is emitted but not declared becomes invisible to callers who pass an explicit `entities` list, which silently weakens obfuscation; `tests/test_anonymize.py` guards against this.
 
 The `anonymize` function takes in a raw string as an argument; it executes the `analyze` function defined above, then uses the resulting list of `RecognizerResult` to find PII to obfuscate based on a `SurrogateAnonymizer` object, then returns an obfuscated string. Use `get_anonymize` instead to get an `AnonymizeResponse` object instead of the obfuscated string.
 
@@ -92,14 +117,11 @@ cleaned_texts = [piilo.anonymize(text) for text in texts]
 
 ## PIILO with CLI: Overview
 
-The `anonymize_batch` and `anonymize_batch_cli` functions defined in `main.py` are functions intended to be used with CLI. The entry point for using PIILO is defined in `setup.py` like so:
+The `anonymize_batch` and `anonymize_batch_cli` functions defined in `main.py` are functions intended to be used with CLI. The entry point for using PIILO is defined in `pyproject.toml` like so:
 
-```python
-entry_points={
-    "console_scripts": [
-        "obfuscate=piilo:anonymize_batch_cli",
-    ],
-}
+```toml
+[project.scripts]
+obfuscate = "piilo:anonymize_batch_cli"
 ```
 
 Modify the arguments that the `obfuscate` command can take in by using `argparse`.
