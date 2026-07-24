@@ -1,30 +1,74 @@
-[tool.poetry]
-name = "piilo"
-version = "0.0.2"
-description = ""
-authors = ["Langdon Holmes", "Joon Suh Choi"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.12"
-spacy = "^3.7.6"
-names-dataset = "^3.1.0"
-nameparser = "^1.1.3"
-scikit-learn = "^1.5.2"
-streamlit = "^1.37.1"
-st-annotated-text = "^4.0.1"
-presidio-analyzer = "^2.2.355"
-presidio-anonymizer = "^2.2.355"
-polars = "^1.5.0"
-en-core-web-sm = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1.tar.gz"}
-pandas = "^2.2.2"
-numpy = "<2.0.0"
-faker = "^27.4.0"
-xgboost = "^2.1.1"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "piilo"
+version = "0.3.0"
+description = "Personally Identifiable Information Labeling and Obfuscation for student text"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Langdon Holmes" },
+    { name = "Joon Suh Choi" },
+]
+keywords = ["pii", "deidentification", "anonymization", "nlp", "privacy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+dependencies = [
+    "spacy>=3.8,<4",
+    "presidio-analyzer>=2.2.355",
+    "presidio-anonymizer>=2.2.355",
+    "xgboost>=2.1",
+    "scikit-learn>=1.5",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "pyarrow>=15",
+    "faker>=27",
+    "nameparser>=1.1.3",
+    "names-dataset>=3.1",
+    "pydantic>=2",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+app = [
+    "streamlit>=1.37",
+    "st-annotated-text>=4.0.1",
+]
+dev = [
+    "pytest>=8",
+    "black>=24",
+    "isort>=5.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/langdonholmes/piilo"
+Repository = "https://github.com/langdonholmes/piilo"
+Paper = "https://doi.org/10.1108/ILS-04-2023-0032"
+
+[project.scripts]
+obfuscate = "piilo:anonymize_batch_cli"
+
+[tool.setuptools.packages.find]
+include = ["piilo*"]
+
+[tool.setuptools.package-data]
+"piilo.configs" = ["*.yaml"]
+"piilo.data" = ["*.parquet"]
+"piilo.models" = ["*.pkl", "*.json"]
 
 [tool.isort]
 profile = "black"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

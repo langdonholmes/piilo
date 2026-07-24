@@ -1,8 +1,24 @@
+# Large model and data files, downloaded separately. See DEV_README.md.
+piilo/data/*.parquet
+piilo/models/*.pkl
+piilo/models/*.json
+
+# Python
+__pycache__/
+*.py[cod]
 .ipynb_checkpoints
-__pycache__
-data/
-models/
+*.egg-info/
 dist/
 build/
-piilo.egg-info/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+
+# OS
 .DS_Store
