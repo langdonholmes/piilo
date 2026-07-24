@@ -155,6 +155,10 @@ class KaggleThirdAnalyzer(LocalRecognizer):
         self.first_name_diff = set(self.setup_parquets("first_name_diff").iloc[:, 0])
         self.last_name_diff = set(self.setup_parquets("last_name_diff").iloc[:, 0])
 
+        # Loaded once: these are tens of megabytes and analyze() runs per document.
+        self.models_splitter, self.models_fp_remove = self.load_models()
+        self.vectorizer_raw, self.vectorizer_pt = self.load_vectorizers()
+
         super().__init__(
             supported_language=self.cfg["supports"]["languages"],
             supported_entities=self.ENTITIES,
@@ -556,9 +560,10 @@ class KaggleThirdAnalyzer(LocalRecognizer):
             logger.warning("Skipping SpaCy, nlp artifacts not provided...")
             return results
 
-        # Load models
-        models_splitter, models_fp_remove = self.load_models()
-        vectorizer_raw, vectorizer_pt = self.load_vectorizers()
+        models_splitter = self.models_splitter
+        models_fp_remove = self.models_fp_remove
+        vectorizer_raw = self.vectorizer_raw
+        vectorizer_pt = self.vectorizer_pt
 
         # Some feature generation needs to be done first using because
         # part of token-level processing requires some byproducts of feature generation.

@@ -24,14 +24,36 @@ configuration = {
 
 logger = logging.getLogger("piilo")
 
-logger.info("Loading Custom Presidio Analyzer and Anonymizer...")
-analyzer = CustomAnalyzer(configuration)
-anonymizer = SurrogateAnonymizer()
-logger.info("Loading Successful!")
+_analyzer = None
+_anonymizer = None
+
+
+def get_analyzer() -> CustomAnalyzer:
+    """Build the analyzer on first use.
+
+    Construction reads roughly 100 MB of parquet tables and XGBoost models, so
+    it is deferred rather than run on import.
+    """
+    global _analyzer
+    if _analyzer is None:
+        logger.info("Loading Custom Presidio Analyzer...")
+        _analyzer = CustomAnalyzer(configuration)
+        logger.info("Loading Successful!")
+    return _analyzer
+
+
+def get_anonymizer() -> SurrogateAnonymizer:
+    """Build the surrogate anonymizer on first use."""
+    global _anonymizer
+    if _anonymizer is None:
+        logger.info("Loading Surrogate Anonymizer...")
+        _anonymizer = SurrogateAnonymizer()
+        logger.info("Loading Successful!")
+    return _anonymizer
 
 
 def analyze(raw_text: str, entities=None, language="en"):
-    analyzer_result = analyzer.analyze(
+    analyzer_result = get_analyzer().analyze(
         raw_text,
         entities=entities,
         language=language,
@@ -43,7 +65,7 @@ def anonymize(raw_text: str, entities=None, language="en") -> str:
 
     analyzer_result = analyze(raw_text, entities, language)
 
-    return anonymizer.anonymize(raw_text, analyzer_result)
+    return get_anonymizer().anonymize(raw_text, analyzer_result)
 
 
 def get_anonymize(anon_req: AnonymizeRequest) -> AnonymizeResponse:
@@ -98,7 +120,9 @@ def anonymize_batch(dir: str, entities=None, language="en", file_format="csv") -
             with open(os.path.join(dir, file), "r", encoding="utf-8") as f:
                 raw_text = f.read()
                 analyzer_result = analyze(raw_text, entities, language)
-                anonymizer_result = anonymizer.anonymize(raw_text, analyzer_result)
+                anonymizer_result = get_anonymizer().anonymize(
+                    raw_text, analyzer_result
+                )
                 res.append((file, anonymizer_result.text))
 
         except Exception as e:
